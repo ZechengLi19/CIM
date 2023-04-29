@@ -22,6 +22,7 @@ pip install -r requirements.txt
 
 ## Experiments
 ### Training
+
 We use the following script to train CIM model.
 
 For VOC2012 dataset: 
@@ -39,6 +40,7 @@ python -u ./tools/train_net_step.py \
 ```
 
 ### Evaluation
+
 We use the following script to evaluate CIM model.
 
 For VOC2012 dataset: 
