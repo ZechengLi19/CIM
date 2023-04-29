@@ -22,7 +22,6 @@ pip install -r requirements.txt
 
 ## Experiments
 ### Training
-
 We use the following script to train CIM model.
 
 For VOC2012 dataset: 
