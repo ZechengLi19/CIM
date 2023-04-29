@@ -1,0 +1,73 @@
+MODEL:
+  TYPE: generalized_rcnn
+  CONV_BODY: vgg16.dilated_conv5_body
+NUM_GPUS: 2
+WSDDN_BRANCH: False
+PCL_BRANCH: False
+PPSN_BRANCH: True
+PPSN_LOSS_FUNCTION: 'CELoss_nr'
+MaskAlign: True
+VGG_CLS_FEATURE: False # False --> 就不需要下面的 pth
+GLOBAL_LOSS: False # True False
+DYNAMIC_LABEL: False
+ADD_CONV: False
+GCN: False
+GCN2: False
+GCN3: False
+MASK_IOU: False
+GAP: False
+GCN_PPSN: False
+SCORE: False
+iou_label: True
+refine_model_v2: True
+Super_pixel_GNN: False
+REFINE_TIMES: 3
+DEDUP_BOXES: 0.0
+transform_mode: ToTensor
+step_rate: 0.1
+easy_case_mining: True
+
+VGG:
+  IMAGENET_PRETRAINED_WEIGHTS: '/home/lzc/WSIS-Benchmark/pths/WSRCNN/vgg16_caffe.pth' # edit
+  FREEZE_AT: 2
+SOLVER:
+  WEIGHT_DECAY: 0.0005
+  LR_POLICY: steps_with_decay
+#  BASE_LR: 0.001
+  BASE_LR: 0.0005
+  GAMMA: 0.1
+  # 1x schedule (note TRAIN.IMS_PER_BATCH: 1)
+  MAX_ITER: 60000 #60000 #90000
+  STEPS: [0, 40000] #[0, 40000]#[0, 75000]
+FAST_RCNN:
+  ROI_BOX_HEAD: vgg16.roi_2mlp_head_refine_model_mask_fuse
+  ROI_XFORM_METHOD: RoIAlign # RoIPoolF
+  ROI_XFORM_RESOLUTION: 7
+  MLP_HEAD_DIM: 4096
+  MASK_SIZE: 7
+TRAIN:
+   # edit
+#  SCALES: (480, )
+  SCALES: (480, 576, 688, 864, 1200)
+  MAX_SIZE: 2000
+  IMS_PER_BATCH: 1
+  BATCH_SIZE_PER_IM: 4096
+  PROPOSAL_FILES: ('/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob/voc_2012_cobtrainaug_num200_resolution7.pkl',) # edit
+#  PROPOSAL_FILES: ('/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob/voc_2012_cobtrainaug_num200_resolution7_context_True_rois.pkl',) # edit
+  REFINE_FILES: ("/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/label_assign/voc_2012_prmref_assign_bg_filter_0.pkl",)
+TEST:
+  SCORE_THRESH: 1e-5 # 1e-5  # 0.2
+  PROPOSAL_FILTER: False # True
+  SCALE: 480
+  MAX_SIZE: 2000
+  NMS: 0.3
+  PROPOSAL_FILES: ('/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob/voc_2012_sbdval_num200_resolution7.pkl',) # edit
+#  PROPOSAL_FILES: ('/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob/voc_2012_sbdval_num200_resolution7_context_True_rois.pkl',) # edit
+  BBOX_AUG:
+#    ENABLED: False
+    ENABLED: True
+    H_FLIP: True
+    SCALES: (576, 688, 864, 1200)
+    SCALE_H_FLIP: True
+    SCORE_HEUR: 'AVG'
+    COORD_HEUR: 'ID'
