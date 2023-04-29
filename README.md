@@ -20,6 +20,45 @@ conda activate CIM
 pip install -r requirements.txt
 ```
 
+## Preparation
+### Datasets
+We use the following datasets in our experiments:
+- [**VOC2012**](http://host.robots.ox.ac.uk/pascal/VOC/voc2012/)
+- [**COCO2017**](https://cocodataset.org/#home)
+
+### Dataset structure
+For simplicity, our datasets are structured in the following way:
+```
+/CIM/data/
+├── VOC2012/
+│   ├── annotations/
+│   ├── JPEGImages/
+│   ├── COB_SBD_trainaug/
+│   └── output/
+│
+├── coco2017/
+│   ├── annotations/
+│   ├── train2017/
+│   ├── val2017/
+│   ├── test2017/
+│   └── COB-COCO/
+│
+├── cob_asy_iou/
+│   ├── coco2017/
+│   └── VOC2012/
+│
+└── cob_iou/
+    ├── coco2017/
+    └── VOC2012/
+```
+
+#### Note: 
+- VOC2012/annotations is a folder containing label files in json format.
+- VOC2012/COB_SBD_trainaug and VOC2012/output are folders containing COB files.
+- coco2017/COB-COCO is a folder containing COB files.
+- cob_iou/ can be downloaded from [here](https://drive.google.com/drive/folders/1BwS_FaM9OOWzpjAR5Tul2gLgFbv0iN9X?usp=sharing).
+- cob_asy_iou/ can be downloaded from [here](https://drive.google.com/drive/folders/1PZfP9Wz0uL33wMcY6wX--C6Wb_cH1ZHT?usp=sharing).
+
 ## Experiments
 ### Training
 We use the following script to train CIM model.
