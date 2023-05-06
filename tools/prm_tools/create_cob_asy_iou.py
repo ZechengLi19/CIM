@@ -5,23 +5,13 @@ import sys
 # sys.path.append("lib/datasets/")
 # sys.path.append("lib/prm/")
 sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname('__file__'))))
-from lib.datasets.voc_data import VOC_CLASSES_background,VOC_COLORS_background
-from lib.prm.prm_model_gt import peak_response_mapping, fc_resnet50
-from lib.prm.prm_configs import open_transform
-from lib.utils.mask_utils import mask_iou,mask_asymmetric_iou
-from lib.prm.prm_configs import ismember
+from lib.utils.mask_utils import mask_asymmetric_iou
 
 import torch
-# from torchvision import ops
-import torch.nn.functional as F
-
-import json
 from six.moves import cPickle as pickle
 
 import numpy as np
 import cupy as cp
-import matplotlib.pyplot as plt
-import cv2
 from PIL import Image
 
 from scipy.io import loadmat
@@ -32,19 +22,13 @@ from tqdm import tqdm
 
 from pycocotools.coco import COCO
 import multiprocessing
-import copy
 print(multiprocessing.get_start_method())
 multiprocessing.set_start_method('spawn', force=True)
 
 # edit
-# data_dir = "/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob_iou/VOC2012"
 # data_dir = "/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob_asy_iou/VOC2012"
-data_dir = "/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob_iou/coco2017"
-# data_dir = "/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob_asy_iou/coco2017"
+data_dir = "/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob_asy_iou/coco2017"
 dataset = "coco"
-print(data_dir)
-ASY = 'asy' in data_dir
-print(ASY)
 if not os.path.exists(data_dir):
     os.makedirs(data_dir)
 
@@ -112,10 +96,7 @@ def generate_assugn_coco2017(imgIds,yml_par,dataset,cocoGt):
             avgmask = mask_proposals[j]
 
             # cupy
-            if ASY == True:
-                proposal_iou = mask_asymmetric_iou(mask_proposals,cp.expand_dims(avgmask,axis=0))
-            else:
-                proposal_iou = mask_iou(mask_proposals, cp.expand_dims(avgmask, axis=0))
+            proposal_iou = mask_asymmetric_iou(mask_proposals,cp.expand_dims(avgmask,axis=0))
 
             iou_map.append(proposal_iou)
 
@@ -149,10 +130,7 @@ def generate_assign_voc2012(imgIds,yml_par,dataset,cocoGt):
             avgmask = mask_proposals[j]
 
             # cupy
-            if ASY == True:
-                proposal_iou = mask_asymmetric_iou(mask_proposals,cp.expand_dims(avgmask,axis=0))
-            else:
-                proposal_iou = mask_iou(mask_proposals, cp.expand_dims(avgmask, axis=0))
+            proposal_iou = mask_asymmetric_iou(mask_proposals,cp.expand_dims(avgmask,axis=0))
 
             iou_map.append(proposal_iou)
 

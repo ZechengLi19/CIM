@@ -5,7 +5,10 @@
 ![CIM](docs/pipeline.png) 
 
 ## Code
-Code is cleaning. 
+- The code is being cleaned up.
+
+I'm currently working on a graduation project and may be slower to update.
+However, if you have any questions, please feel free to contact me (lizecheng19@gmail.com). 
 
 ## Installation
 ### Setup with Conda
@@ -43,21 +46,27 @@ For simplicity, our datasets are structured in the following way:
 │   ├── test2017/
 │   └── COB-COCO/
 │
+├── label_assign/
+│   ├── voc_2012_label_assign.pkl
+│   └── coco_2017_label_assign.pkl
+│
 ├── cob_asy_iou/
-│   ├── coco2017/
-│   └── VOC2012/
+│   ├── VOC2012/
+│   └── coco2017/
 │
 └── cob_iou/
-    ├── coco2017/
-    └── VOC2012/
+    ├── VOC2012/
+    └── coco2017/
+
 ```
 
 #### Note: 
 - VOC2012/annotations is a folder containing label files in json format.
 - VOC2012/COB_SBD_trainaug and VOC2012/output are folders containing COB files.
 - coco2017/COB-COCO is a folder containing COB files.
-- cob_iou/ can be downloaded from [here](https://drive.google.com/drive/folders/1BwS_FaM9OOWzpjAR5Tul2gLgFbv0iN9X?usp=sharing).
-- cob_asy_iou/ can be downloaded from [here](https://drive.google.com/drive/folders/1PZfP9Wz0uL33wMcY6wX--C6Wb_cH1ZHT?usp=sharing).
+- label_assign/ contains pre-computed pseudo labels for VOC2012 and COCO2017 datasets, link is [here](https://drive.google.com/drive/folders/1j44PAimT7v4RkkOlKbbqcCLAiNf9sXjN?usp=sharing). It also can be created by running **`tools\prm_tools\prm_label_assign.py`**, the weights of prm model can be downloaded from [here](https://drive.google.com/drive/folders/1kzFsaPlbYK0OY31a7vqsRLDaJQ2BbAs0?usp=sharing).
+- cob_iou/ can be downloaded from [here](https://drive.google.com/drive/folders/1BwS_FaM9OOWzpjAR5Tul2gLgFbv0iN9X?usp=sharing). It also can be created by running **`tools\prm_tools\create_cob_iou.py`**.
+- cob_asy_iou/ can be downloaded from [here](https://drive.google.com/drive/folders/1PZfP9Wz0uL33wMcY6wX--C6Wb_cH1ZHT?usp=sharing). It also can be created by running **`tools\prm_tools\create_cob_asy_iou.py`**.
 
 ## Experiments
 ### Training
