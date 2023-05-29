@@ -1,4 +1,4 @@
-# Complete Instances Mining for WSIS
+# Complete Instances Mining for Weakly Supervised Instance Segmentation
 
 ## Framework
 
