@@ -24,8 +24,7 @@ from model.pcl.pcl import PCLLosses     # 使用pcl文件夹中的PCLLosses，�
 # from modeling.roi_xfrom.roi_align.functions.roi_align import RoIAlignFunction
 from ops import RoIPool, RoIAlign
 
-# 重点使用模块：pcl_heads
-import modeling.pcl_heads as pcl_heads
+import modeling.heads as heads
 import utils.blob as blob_utils
 import utils.net as net_utils
 import utils.vgg_weights_helper as vgg_utils
@@ -39,39 +38,14 @@ from modeling.pamr import PAMR
 from scipy.io import loadmat
 
 from utils.mask_utils import mask_iou
-# from prm.prm_configs import ismember  # 没用上暂时不管
 
-#from bp.exbp import pr_conv2d,pr_linear
 from types import MethodType
-# torch.use_pos_weights = True
-from prm.prm_modules import peak_stimulation
 
 import scipy.sparse as sp
 from PIL import Image
 from torchcam.methods import GradCAM
 
 logger = logging.getLogger(__name__)
-
-# 将 cls label 和 iou label 进行融合
-def build_ablation_label(cls_label, iou_label):
-    assert cls_label.ndim == 2
-    assert iou_label.ndim == 1
-
-    # # 将前景取出来
-    # new_cls_label = cls_label * iou_label[:,None]
-    # # 将背景取出来
-    # new_cls_label += cls_label * cls_label[:,0][:,None]
-
-    new_cls_label = torch.zeros_like(cls_label,device=cls_label.device)
-    full_fg_ind = (torch.sum(cls_label[:,1:],dim=-1) * iou_label)!=0
-
-    bg_ind = cls_label[:,0] != 0
-
-    new_cls_label[full_fg_ind] = cls_label[full_fg_ind]
-    new_cls_label[bg_ind,0] = 1
-
-    assert new_cls_label.max() <= 1
-    return new_cls_label
 
 def get_func(func_name):
     """Helper to return a function object by name. func_name must identify a
@@ -136,7 +110,6 @@ class Generalized_RCNN(nn.Module):
         self.mapping_to_detectron = None
         self.orphans_in_detectron = None
 
-        # Conv_Body.dim_out: 512,   Conv_Body.spatial_scale: 1. / 8.
         cls_num = cfg.MODEL.NUM_CLASSES + 1
 
         # feature extraction
@@ -144,30 +117,24 @@ class Generalized_RCNN(nn.Module):
 
         self.Box_Head = get_func(cfg.FAST_RCNN.ROI_BOX_HEAD)(self.Conv_Body.dim_out, self.roi_feature_transform, self.Conv_Body.spatial_scale)
 
-        if cfg.refine_model_v2:
-            step_rate = cfg.step_rate
+        step_rate = cfg.step_rate
 
-            self.cls_iou_model = pcl_heads.cls_iou_model(self.Box_Head.dim_out, cls_num, cfg.REFINE_TIMES,
-                                                         class_agnostic=False)
-            self.mist_layer_list = []
-            for ref_time in range(cfg.REFINE_TIMES):
-                self.mist_layer_list.append(pcl_heads.mist_layer_v2(portion=cfg.topk,
-                                                                     full_thr=0.5 + step_rate * ref_time,
-                                                                     iou_thr=0.25 + step_rate * ref_time,
-                                                                     sample=cfg.easy_case_mining,
-                                                                     test_mode=cfg.refine_model_cal,
-                                                                     get_diffuse_gt=cfg.after_diffuse,
-                                                                     ))
+        self.cls_iou_model = heads.cls_iou_model(self.Box_Head.dim_out, cls_num, cfg.REFINE_TIMES,
+                                                     class_agnostic=False)
+        self.mist_layer_list = []
+        for ref_time in range(cfg.REFINE_TIMES):
+            self.mist_layer_list.append(heads.mist_layer(portion=cfg.topk,
+                                                             full_thr=0.5 + step_rate * ref_time,
+                                                             iou_thr=0.25 + step_rate * ref_time,
+                                                             sample=cfg.easy_case_mining,
+                                                             ))
 
-            self.loss_function = pcl_heads.cls_iou_loss()
+        self.loss_function = heads.cls_iou_loss()
 
-            self.diffuse_mode = [True, True, True]
+        self.diffuse_mode = [True, True, True]
 
-            print("diffuse_mode: ")
-            print(self.diffuse_mode)
-
-        else:
-            raise NotImplementedError
+        print("diffuse_mode: ")
+        print(self.diffuse_mode)
 
         self._init_modules()
 
@@ -191,7 +158,7 @@ class Generalized_RCNN(nn.Module):
             for p in self.Conv_Body.parameters():
                 p.requires_grad = False
 
-    def forward(self, data, rois, masks, labels, gtrois, mat, True_rois = None,iou_label = None, peak_score=None, path=None, index=None):
+    def forward(self, data, rois, masks, labels, gtrois, mat, path=None, index=None):
         with torch.set_grad_enabled(self.training):
             # print(index)
             im_data = data
@@ -202,9 +169,6 @@ class Generalized_RCNN(nn.Module):
                 labels = labels.squeeze(dim=0).type(im_data.dtype)
                 mat = mat.squeeze(dim=0).type(im_data.dtype)
 
-            # print(path)
-            device_id = im_data.get_device()
-
             return_dict = {}  # A dict to collect return variables
 
             blob_conv = self.Conv_Body(im_data)  # [1, 512, 57, 86]
@@ -214,10 +178,7 @@ class Generalized_RCNN(nn.Module):
 
             masks.requires_grad = False
 
-            if cfg.refine_model_v2:
-                seg_x, out_seg_x, diff_seg_x = self.Box_Head(blob_conv, rois, masks.detach())
-            else:
-                raise NotImplementedError
+            seg_x, out_seg_x, diff_seg_x = self.Box_Head(blob_conv, rois, masks.detach())
 
             file_name = os.path.splitext(os.path.split(path)[1])[0]
             if "_" in file_name:
@@ -228,79 +189,75 @@ class Generalized_RCNN(nn.Module):
                 iou_dir = "/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob_iou/coco2017"
                 asy_iou_dir = "/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob_asy_iou/coco2017"
 
-            if cfg.refine_model_v2:
-                predict_cls, predict_det, ref_cls_score, ref_iou_score = self.cls_iou_model(seg_x, out_seg_x, diff_seg_x)
-                iou_map = None
-                asy_iou_map = None
+            predict_cls, predict_det, ref_cls_score, ref_iou_score = self.cls_iou_model(seg_x, out_seg_x, diff_seg_x)
+            iou_map = None
+            asy_iou_map = None
 
-                if self.training:
-                    index = index.long()
-                    try:
-                        iou_map = pickle.load(open(os.path.join(iou_dir, file_name + ".pkl"), "rb"))
-                        iou_map = torch.tensor(iou_map, device=labels.device)[index][:, index]
-                    except:
-                        print("iou_map lose " + os.path.join(iou_dir, file_name + ".pkl"))
-                        raise AssertionError
+            if self.training:
+                index = index.long()
+                try:
+                    iou_map = pickle.load(open(os.path.join(iou_dir, file_name + ".pkl"), "rb"))
+                    iou_map = torch.tensor(iou_map, device=labels.device)[index][:, index]
+                except:
+                    print("iou_map lose " + os.path.join(iou_dir, file_name + ".pkl"))
+                    raise AssertionError
 
-                    try:
-                        asy_iou_map = pickle.load(open(os.path.join(asy_iou_dir, file_name + ".pkl"), "rb"))
-                        asy_iou_map = torch.tensor(asy_iou_map, device=labels.device)[index][:, index]
-                    except:
-                        print("asy_iou_map lose " + os.path.join(asy_iou_dir, file_name + ".pkl"))
-                        raise AssertionError
+                try:
+                    asy_iou_map = pickle.load(open(os.path.join(asy_iou_dir, file_name + ".pkl"), "rb"))
+                    asy_iou_map = torch.tensor(asy_iou_map, device=labels.device)[index][:, index]
+                except:
+                    print("asy_iou_map lose " + os.path.join(asy_iou_dir, file_name + ".pkl"))
+                    raise AssertionError
 
-                    return_dict['losses'] = {}
-                    return_dict['losses']['bag_loss'] = torch.tensor(0, dtype=torch.float32, device=seg_x.device)
-                    return_dict['losses']['cls_stage1_loss'] = torch.tensor(0, dtype=torch.float32, device=seg_x.device)
+                return_dict['losses'] = {}
+                return_dict['losses']['bag_loss'] = torch.tensor(0, dtype=torch.float32, device=seg_x.device)
+                return_dict['losses']['cls_stage1_loss'] = torch.tensor(0, dtype=torch.float32, device=seg_x.device)
 
-                    return_dict['losses']['ind_cls_loss'] = torch.tensor(0, dtype=torch.float32, device=seg_x.device)
-                    return_dict['losses']['ind_iou_loss'] = torch.tensor(0, dtype=torch.float32, device=seg_x.device)
+                return_dict['losses']['ind_cls_loss'] = torch.tensor(0, dtype=torch.float32, device=seg_x.device)
+                return_dict['losses']['ind_iou_loss'] = torch.tensor(0, dtype=torch.float32, device=seg_x.device)
 
-                    for i, (cls_score, iou_score, mist_layer) in enumerate(zip(ref_cls_score, ref_iou_score, self.mist_layer_list)):
-                        # follow WSDDN
-                        lmda = 3 if i == 0 else 1
-                        #########
+                for i, (cls_score, iou_score, mist_layer) in enumerate(zip(ref_cls_score, ref_iou_score, self.mist_layer_list)):
+                    # follow WSDDN
+                    lmda = 3 if i == 0 else 1
+                    #########
 
-                        if i == 0:
-                            pseudo_labels, pseudo_iou_label, loss_weights, group_assign = mist_layer(predict_cls,
-                                                                                               predict_det,
-                                                                                               rois, labels, iou_map,
-                                                                                               asy_iou_map,
-                                                                                               diffuse=self.diffuse_mode[i])
+                    if i == 0:
+                        pseudo_labels, pseudo_iou_label, loss_weights, group_assign = mist_layer(predict_cls,
+                                                                                           predict_det,
+                                                                                           rois, labels, iou_map,
+                                                                                           asy_iou_map,
+                                                                                           diffuse=self.diffuse_mode[i])
 
-                        else:
-                            pseudo_labels, pseudo_iou_label, loss_weights, group_assign = mist_layer(ref_cls_score[i - 1],
-                                                                                               ref_iou_score[i - 1],
-                                                                                               rois, labels, iou_map,
-                                                                                               asy_iou_map,
-                                                                                               diffuse=self.diffuse_mode[i])
+                    else:
+                        pseudo_labels, pseudo_iou_label, loss_weights, group_assign = mist_layer(ref_cls_score[i - 1],
+                                                                                           ref_iou_score[i - 1],
+                                                                                           rois, labels, iou_map,
+                                                                                           asy_iou_map,
+                                                                                           diffuse=self.diffuse_mode[i])
 
-                        if pseudo_labels == None:
-                            continue
+                    if pseudo_labels == None:
+                        continue
 
-                        pseudo_labels = pseudo_labels.detach()
-                        pseudo_iou_label = pseudo_iou_label.detach()
-                        loss_weights = lmda * loss_weights.detach()
+                    pseudo_labels = pseudo_labels.detach()
+                    pseudo_iou_label = pseudo_iou_label.detach()
+                    loss_weights = lmda * loss_weights.detach()
 
-                        ind_cls_loss, ind_iou_loss, f_ind_cls_loss, f_ind_iou_loss, bag_loss = pcl_heads.cal_cls_iou_loss_function_full(cls_score, iou_score, pseudo_labels, pseudo_iou_label,loss_weights, labels)
+                    ind_cls_loss, ind_iou_loss, f_ind_cls_loss, f_ind_iou_loss, bag_loss = pcl_heads.cal_cls_iou_loss_function_full(cls_score, iou_score, pseudo_labels, pseudo_iou_label,loss_weights, labels)
 
-                        return_dict['losses']['ind_cls_loss'] += ind_cls_loss.clone()
-                        return_dict['losses']['ind_iou_loss'] += 3 * ind_iou_loss.clone()
-                        return_dict['losses']['bag_loss'] += bag_loss.clone()
+                    return_dict['losses']['ind_cls_loss'] += ind_cls_loss.clone()
+                    return_dict['losses']['ind_iou_loss'] += 3 * ind_iou_loss.clone()
+                    return_dict['losses']['bag_loss'] += bag_loss.clone()
 
-                    return_dict['losses']['bag_loss'] += pcl_heads.mil_bag_loss(predict_cls, predict_det, labels)
-                    cls_loss, _ = pcl_heads.graph_two_Loss_mean(predict_cls, mat, labels)
-                    return_dict['losses']['cls_stage1_loss'] += cfg.Domain_loss_scale * cls_loss
+                return_dict['losses']['bag_loss'] += heads.mil_bag_loss(predict_cls, predict_det, labels)
+                cls_loss, _ = heads.graph_two_Loss_mean(predict_cls, mat, labels)
+                return_dict['losses']['cls_stage1_loss'] += cfg.Domain_loss_scale * cls_loss
 
-                    for k, v in return_dict['losses'].items():
-                        return_dict['losses'][k] = v.unsqueeze(0)
-
-                else:
-                    # Testing
-                    return_dict = testing_function(predict_cls, predict_det, ref_cls_score, ref_iou_score, return_dict)
+                for k, v in return_dict['losses'].items():
+                    return_dict['losses'][k] = v.unsqueeze(0)
 
             else:
-                raise NotImplementedError
+                # Testing
+                return_dict = testing_function(predict_cls, predict_det, ref_cls_score, ref_iou_score, return_dict)
 
             return return_dict
 

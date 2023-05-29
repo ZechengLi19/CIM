@@ -41,9 +41,7 @@ import json
 # thread safe and causes unwanted GPU memory allocations.
 cv2.ocl.setUseOpenCL(False)
 
-
-
-
+from datasets.json_inference import coco_inst_seg_eval
 
 def parse_args():
     """Parse in command line arguments"""
@@ -80,40 +78,12 @@ def eval(name, total, roidb):
             continue
         if i >= (int(name) + 1) * len(roidb) // total:
             continue
-        try:
-            boxes = all_boxes[entry['image']]
-        except:
-            boxes = all_boxes[
-                entry['image'].replace("/home/data2/Dataset/VOC2012/VOC2012_old/JPEGImages/",
-                                        '/home/data2/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/VOC2012/JPEGImages/'
-                                       )]
-        scores = boxes['scores']  # [:,1:]
+        boxes = all_boxes[entry['image']]
+        scores = boxes['scores']
         boxes = boxes['boxes']
 
-        # # proposal
-        # # COBmat = scipy.io.loadmat(
-        # #         os.path.join('data/coco2014/COB-COCO-val2014-proposals', entry['image'][-29:-4] + '.mat'),    # str(entry['id'])
-        # #         verify_compressed_data_integrity=False)
-        # # COBlabels = COBmat['labels']
-        # # COBsuperpixel = COBmat['superpixels']
-        # if args.dataset == "coco2017":
-        #     file_name = 'COCO_val2014_' + entry['image'][-16:-4] + '.mat'
-        #     if not os.path.exists(os.path.join('data/coco2014/COB-COCO', file_name)):
-        #         file_name = 'COCO_train2014_' + entry['image'][-16:-4] + '.mat'
-        #     COB_proposals = scipy.io.loadmat(
-        #         os.path.join('data/coco2014/COB-COCO', file_name),
-        #         verify_compressed_data_integrity=False)['maskmat']
-        #     mask_proposals = COB_proposals.copy()
-        #     num_proposal = len(mask_proposals)
-        # else:
-        #     mask_proposals = scipy.io.loadmat(
-        #         os.path.join('data/coco2014/COB-COCO', entry['image'][-29:-4] + '.mat'),
-        #         verify_compressed_data_integrity=False)['maskmat'].copy()
-        #     # mask_proposals = COBmat.copy()
-        #     num_proposal = len(mask_proposals)
-
         if "coco" in args.dataset:
-            cob_original_file = '/home/lzc/WSIS-Benchmark/dataset/coco2017/COB-COCO'
+            cob_original_file = './data/coco2017/COB-COCO'
             file_n = entry['image'].split("/")[-1].replace(".jpg", ".mat")
             file_name = 'COCO_train2014_' + file_n
             if not os.path.exists(os.path.join(cob_original_file, file_name)):
@@ -126,15 +96,10 @@ def eval(name, total, roidb):
             cls_num = 81
 
         else:
-            file_name = entry['image'][-15:-4]
-            mask_proposals = loadmat(os.path.join('/home/data2/Dataset/VOC2012/VOC2012_old/output', file_name + '.mat'))['maskmat'][:, 0]
+            cob_original_file = './data/VOC2012/COB_SBD_val'
+            file_name = entry['image'][-15:-4] + '.mat'
+            mask_proposals = loadmat(os.path.join(cob_original_file, file_name))['maskmat'][:, 0]
             cls_num = 21
-
-        '''
-        proposals = []
-        for COB_ind in range( min(200, len(COBlabels)) ): # COB_ind = 0
-            proposals.append( ismember(np.array(COBsuperpixel), np.array(COBlabels[COB_ind][0][0]) ))
-        '''
 
         if cfg.TEST.PROPOSAL_FILTER:
             image_area = entry['height'] * entry['width']
@@ -145,16 +110,11 @@ def eval(name, total, roidb):
                 0] * image_area
             scores[invalid_index] = 0
 
-        # scores, boxes, cls_boxes, cls_masks = mask_results_with_nms_and_limit(cfg, scores, boxes, np.stack(proposals))
         scores, boxes, cls_boxes, cls_inds = mask_results_with_nms_and_limit_get_index(cfg, scores, boxes)
 
         for cls_idx in range(1, cls_num):
             for instance_idx in range(len(cls_boxes[cls_idx])):  # instance_idx = 0
-                # print(cls_masks[cls_idx][instance_idx].shape)
-                # print(cls_masks[cls_idx][instance_idx])
-                # print(cls_masks[cls_idx][instance_idx].dtype)
                 COB_ind = cls_inds[cls_idx][instance_idx]
-                # mask = ismember(np.array(COBsuperpixel), np.array(COBlabels[COB_ind][0][0]) ).astype(np.uint8)
                 mask = mask_proposals[COB_ind]
                 if cls_num == 21:
                     predictions.append(dict(image_id=int(entry['id']),
@@ -170,13 +130,10 @@ def eval(name, total, roidb):
                                             ))
                 else:
                     raise AssertionError
-        # extend_results(i, final_boxes, cls_box    es)
-        # print(f'\rImage Index: {(i + 1):.0f}/{num_images:.0f}  ', end='')
     with open(args.result_path[:-14] + 'sbd_instance_pred_origin' + '_' + str(range_begin) + '_' + str(range_end) +'.json', 'w') as f:
         f.write(json.dumps(predictions))
 
 if __name__ == '__main__':
-
     logger = utils.logging.setup_logging(__name__)
     args = parse_args()
     logger.info('Called with args:')
@@ -190,40 +147,21 @@ if __name__ == '__main__':
         merge_cfg_from_file(args.cfg_file)
     if args.set_cfgs is not None:
         merge_cfg_from_list(args.set_cfgs)
-    if args.cfg_file is not None:
-        merge_cfg_from_file(args.cfg_file)
-    if args.set_cfgs is not None:
-        merge_cfg_from_list(args.set_cfgs)
 
     if args.dataset == "coco2017val":
         cfg.TEST.DATASETS = ('coco_2017_val',)
         cfg.MODEL.NUM_CLASSES = 80
-        annFile="/home/lzc/WSIS-Benchmark/dataset/coco2017/annotations/instances_val2017.json"
+        annFile="./data/coco2017/annotations/instances_val2017.json"
 
     elif args.dataset == "coco2017test":
         cfg.TEST.DATASETS = ('coco_2017_test-dev',)
         cfg.MODEL.NUM_CLASSES = 80
-        annFile = "/home/lzc/WSIS-Benchmark/dataset/coco2017/annotations/instances_val2017.json"
-
-    elif args.dataset == "coco2017train":
-        cfg.TEST.DATASETS = ('coco_2017_train',)
-        cfg.MODEL.NUM_CLASSES = 80
-        cfg.TEST.PROPOSAL_FILES = cfg.TRAIN.PROPOSAL_FILES
-        annFile="/home/lzc/WSIS-Benchmark/dataset/coco2017/annotations/instances_train2017.json"
+        annFile = None # upload to website for evaluation
 
     elif args.dataset == 'voc2012sbdval':
         cfg.TEST.DATASETS = ('voc_2012_sbdval',)
         cfg.MODEL.NUM_CLASSES = 20
-        annFile="/home/data2/Dataset/VOC2012/VOC2012_old/annotations/voc_2012_val.json"
-
-    elif args.dataset == 'voc2012sbdval_style':
-        cfg.TEST.DATASETS = ('voc_2012_sbdval_style',)
-        cfg.MODEL.NUM_CLASSES = 20
-    elif args.dataset == 'voc2012trainaug':
-        cfg.TEST.DATASETS = ('voc_2012_trainaug',)
-        cfg.MODEL.NUM_CLASSES = 20
-        cfg.TEST.PROPOSAL_FILES = cfg.TRAIN.PROPOSAL_FILES
-        train_json_file = "/home/lzc/WSIS-Benchmark/dataset/VOCdevkit/VOC2012/annotations/voc_2012_trainaug.json"
+        annFile="./data/VOC2012/annotations/voc_2012_val.json"
 
     else:
         assert cfg.TEST.DATASETS, 'cfg.TEST.DATASETS shouldn\'t be empty'
@@ -241,9 +179,6 @@ if __name__ == '__main__':
     roidb = dataset.get_roidb()
     num_images = len(roidb)
     num_classes = cfg.MODEL.NUM_CLASSES + 1
-    # final_boxes = empty_results(num_classes, num_images)
-
-    # %%
 
     total_process = 12
     proposal_size_limit = (0.00002, 0.85)
@@ -270,62 +205,42 @@ if __name__ == '__main__':
         file_name = 'sbd_instance_pred_origin' + '_' + str(begin) + '_' + str(end)
         predictions.extend(block[file_name])
 
-
     with open(args.result_path[:-14] + 'sbd_instance_pred_origin.json', 'w') as f:
         f.write(json.dumps(predictions))
 
     result_file = args.result_path[:-14] + 'sbd_instance_pred_origin.json'
 
-    annType = ['segm', 'bbox', 'keypoints']
-    annType = annType[0]
-    cocoGt = COCO(annFile)
-    cocoDt = cocoGt.loadRes(result_file)
-    cocoEval = COCOeval(cocoGt, cocoDt, annType)
-    cocoEval.evaluate()
-    cocoEval.accumulate()
-    cocoEval.summarize()
+    if annFile == None:
+        print("The json file needs to be uploaded to the website for evaluation")
 
+    else:
+        annType = ['segm', 'bbox', 'keypoints']
+        annType = annType[0]
+        cocoGt = COCO(annFile)
+        cocoDt = cocoGt.loadRes(result_file)
+        cocoEval = COCOeval(cocoGt, cocoDt, annType)
+        cocoEval.evaluate()
+        cocoEval.accumulate()
+        cocoEval.summarize()
 
-    def eval_ins_seg(annotation_file_path, result_file_path, thresholds):
-        coco_gt = COCO(annotation_file_path)
-        coco_dt = coco_gt.loadRes(result_file_path)
+        mAP, cls_ap, cls_names = coco_inst_seg_eval(annFile, result_file)
 
-        coco_eval = COCOeval(coco_gt, coco_dt, 'segm')
-        coco_eval.params.iouThrs = thresholds  # set iou threshold
-        print(thresholds)
+        stack_item = []
+        for key, value in cls_ap.items():
+            stack_item.append(value)
 
-        coco_eval.evaluate()
-        coco_eval.accumulate()
-        coco_eval.summarize()
-        object_classes = [v['name'] for v in coco_gt.loadCats(coco_gt.getCatIds())]
+        stack_item = np.concatenate(stack_item, axis=0).reshape((len(cls_ap.keys()),-1)).transpose()
 
-        mAP = dict()
-        cls_AP = dict()
-        # eval["precision"] --> np.array(T,R,K,A,M)
-        #                       T = len(p.iouThrs)
-        #                       R = len(p.recThrs)
-        #                       K = len(p.catIds) if p.useCats else 1
-        #                       A = len(p.areaRng) --> select the size of object, all? small? mid? large?
-        #                       M = len(p.maxDets) --> max det nums, 1, 10, 100?
-        for thr_ind, thr in enumerate(coco_eval.params.iouThrs):
-            ap_by_class = []
-            for cls_ind, cls_name in enumerate(object_classes):
-                cls_precision = coco_eval.eval['precision'][thr_ind, :, cls_ind, 0, -1]
-                # cls_ap = np.mean(cls_precision[cls_precision > -1])
-                tmp = cls_precision[cls_precision > -1]
-                if len(tmp) != 0:
-                    cls_ap = np.mean(tmp)
-                else:
-                    cls_ap = 0
-                ap_by_class.append(cls_ap)
-            mAP['%.2f' % thr] = np.asarray(ap_by_class).mean()
-            cls_AP['%.2f' % thr] = ap_by_class
-        return mAP, cls_AP
+        print('Class Performance(COCOAPI): ')
 
-    mAP, cls_ap = eval_ins_seg(annFile, result_file,np.array([0.25, 0.5,0.7,0.75]))
+        for idx, _ in enumerate(cls_names):
+            print("%-15s -->  %.1f, %.1f, %.1f, %.1f" % (cls_names[idx], 100 * stack_item[idx][0],
+                                                        100 * stack_item[idx][1], 100 * stack_item[idx][2],
+                                                        100 * stack_item[idx][3]))
 
-    print(mAP)
-    print(cls_ap)
+        print('Performance(COCOAPI): ')
+        for k, v in mAP.items():
+            print('mAP@%s: %.1f' % (k, 100 * v))
 
     with open(result_file, 'r') as f:
         res = json.load(f)

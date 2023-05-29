@@ -37,7 +37,7 @@ For simplicity, our datasets are structured in the following way:
 │   ├── annotations/
 │   ├── JPEGImages/
 │   ├── COB_SBD_trainaug/
-│   └── output/
+│   └── COB_SBD_val/
 │
 ├── coco2017/
 │   ├── annotations/
@@ -46,9 +46,21 @@ For simplicity, our datasets are structured in the following way:
 │   ├── test2017/
 │   └── COB-COCO/
 │
+├── model_weight/
+│   ├── prm_voc.pth
+│   ├── prm_coco.pth
+│   └── vgg16_caffe.pth
+│ 
 ├── label_assign/
 │   ├── voc_2012_label_assign.pkl
 │   └── coco_2017_label_assign.pkl
+│
+├── cob/
+│   ├── voc_2012_trainaug.pkl
+│   ├── voc_2012_val.pkl
+│   ├── coco_2017_train.pkl
+│   ├── coco_2017_val.pkl
+│   └── coco_2017_test.pkl
 │
 ├── cob_asy_iou/
 │   ├── VOC2012/
@@ -62,9 +74,11 @@ For simplicity, our datasets are structured in the following way:
 
 #### Note: 
 - VOC2012/annotations is a folder containing label files in json format.
-- VOC2012/COB_SBD_trainaug and VOC2012/output are folders containing COB files.
+- VOC2012/COB_SBD_trainaug and VOC2012/COB_SBD_val are folders containing COB files.
 - coco2017/COB-COCO is a folder containing COB files.
-- label_assign/ contains pre-computed pseudo labels for VOC2012 and COCO2017 datasets, link is [here](https://drive.google.com/drive/folders/1j44PAimT7v4RkkOlKbbqcCLAiNf9sXjN?usp=sharing). It also can be created by running **`tools\prm_tools\prm_label_assign.py`**, the weights of prm model can be downloaded from [here](https://drive.google.com/drive/folders/1kzFsaPlbYK0OY31a7vqsRLDaJQ2BbAs0?usp=sharing).
+- model_weight/ is a folder containing weight of models. Weights can be downloaded from [here](https://drive.google.com/drive/folders/1kzFsaPlbYK0OY31a7vqsRLDaJQ2BbAs0?usp=sharing).
+- label_assign/ contains pre-computed pseudo labels for VOC2012 and COCO2017 datasets, link is [here](https://drive.google.com/drive/folders/1j44PAimT7v4RkkOlKbbqcCLAiNf9sXjN?usp=sharing). It also can be created by running **`tools\prm_tools\prm_label_assign.py`**.
+- cob is a folder containing two dataset proposals. The pkl files contain proposals that are scaled to a size of 7*7. These files will be used in RoiAlign operation.
 - cob_iou/ can be downloaded from [here](https://drive.google.com/drive/folders/1BwS_FaM9OOWzpjAR5Tul2gLgFbv0iN9X?usp=sharing). It also can be created by running **`tools\prm_tools\create_cob_iou.py`**.
 - cob_asy_iou/ can be downloaded from [here](https://drive.google.com/drive/folders/1PZfP9Wz0uL33wMcY6wX--C6Wb_cH1ZHT?usp=sharing). It also can be created by running **`tools\prm_tools\create_cob_asy_iou.py`**.
 
@@ -72,51 +86,25 @@ For simplicity, our datasets are structured in the following way:
 ### Training
 We use the following script to train CIM model.
 
-For VOC2012 dataset: 
 ```bash
-python -u ./tools/train_net_step.py \
---dataset voc2012trainaug \
---cfg ./configs/baseline/resnet50_voc.yaml
-```
-
-For COCO2017 dataset:
-```bash
-python -u ./tools/train_net_step.py \
---dataset coco2017 \
---cfg ./configs/baseline/resnet50_coco2017.yaml
+python -u ./tools/train.py \
+--dataset {dataset} (i.e. "voc2012trainaug" or "coco2017train")  \
+--cfg {config} (i.e. "./configs/baseline/resnet50_voc.yaml")
 ```
 
 ### Evaluation
-
 We use the following script to evaluate CIM model.
 
-For VOC2012 dataset: 
 ```bash
-cfg_file=./configs/baseline/resnet50_voc.yaml
-output_file=Outputs/resnet50_voc/Mar22-00-46-22_user-Super-Server_step
-dataset=voc2012sbdval
-iter_time=model_step44999
+cfg_file={config} (i.e. "./configs/baseline/resnet50_voc.yaml")
+output_file={output folder} (i.e. "./Outputs/resnet50_voc/Mar22-00-46-22_user-Super-Server_step")
+dataset={dataset} (i.e. "voc2012sbdval", "coco2017val" or "coco2017test")
+iter_time={iter} (i.e. "model_step44999")
 
 ckpt=${output_file}/ckpt/${iter_time}.pth
 result_pkl=${output_file}/test/${iter_time}/detections.pkl
 
-python -u tools/my_eval_mask_coco_multi.py \
---cfg ${cfg_file} \
---result_path ${result_pkl} \
---dataset ${dataset}
-```
-
-For COCO2017 dataset: 
-```bash
-cfg_file=./configs/baseline/resnet50_coco2017.yaml
-output_file=Outputs/resnet50_coco2017/Mar15-18-14-26_user-Super-Server_step
-dataset=coco2017val
-iter_time=model_step239999
-
-ckpt=${output_file}/ckpt/${iter_time}.pth
-result_pkl=${output_file}/test/${iter_time}/detections.pkl
-
-python -u tools/my_eval_mask_coco_multi.py \
+python -u tools/evaluation.py \
 --cfg ${cfg_file} \
 --result_path ${result_pkl} \
 --dataset ${dataset}

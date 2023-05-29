@@ -52,7 +52,8 @@ TRAIN:
   MAX_SIZE: 2000
   IMS_PER_BATCH: 1
   BATCH_SIZE_PER_IM: 4096
-  PROPOSAL_FILES: ('/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob/voc_2012_cobtrainaug_num200_resolution7.pkl',) # edit
+  PROPOSAL_FILES: ('/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob/voc_2012_trainaug.pkl',) # edit
+  #  PROPOSAL_FILES: ('/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob/voc_2012_cobtrainaug_num200_resolution7.pkl',) # edit
 #  PROPOSAL_FILES: ('/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob/voc_2012_cobtrainaug_num200_resolution7_context_True_rois.pkl',) # edit
   REFINE_FILES: ("/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/label_assign/voc_2012_prmref_assign_bg_filter_0.pkl",)
 TEST:
@@ -61,7 +62,8 @@ TEST:
   SCALE: 480
   MAX_SIZE: 2000
   NMS: 0.3
-  PROPOSAL_FILES: ('/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob/voc_2012_sbdval_num200_resolution7.pkl',) # edit
+  PROPOSAL_FILES: ('/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob/voc_2012_val.pkl',) # edit
+  #  PROPOSAL_FILES: ('/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob/voc_2012_sbdval_num200_resolution7.pkl',) # edit
 #  PROPOSAL_FILES: ('/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob/voc_2012_sbdval_num200_resolution7_context_True_rois.pkl',) # edit
   BBOX_AUG:
 #    ENABLED: False

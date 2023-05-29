@@ -173,8 +173,6 @@ class JsonDataset(object):
 
 
         if gt:
-            # disable cache lzc edit
-            #
             # Include ground-truth object annotations
             cache_filepath = os.path.join(self.cache_path, self.name+'_gt_roidb_'+str(cfg.FAST_RCNN.MASK_SIZE)+'.pkl')
             if os.path.exists(cache_filepath) and not cfg.DEBUG :
@@ -237,13 +235,10 @@ class JsonDataset(object):
         entry['flipped'] = False
         # Empty placeholders
         entry['boxes'] = np.empty((0, 4), dtype=np.float32)
-        entry['True_rois'] = np.empty((0, 4), dtype=np.float32)
-        entry['masks'] = np.empty((0, cfg.FAST_RCNN.MASK_SIZE, cfg.FAST_RCNN.MASK_SIZE), dtype=np.float32) #��dtype=np.bool) #
+        entry['masks'] = np.empty((0, cfg.FAST_RCNN.MASK_SIZE, cfg.FAST_RCNN.MASK_SIZE), dtype=np.float32) 
         entry['gt_boxes'] = np.empty((0, 5), dtype=np.float32)
         entry['gt_classes'] = np.zeros((1, self.num_classes), dtype=np.int32)
         entry['mat'] = np.empty((0, self.num_classes + 1), dtype=np.float32)
-        entry['iou_label'] = np.empty((0, 1), dtype=np.float32)
-        entry['peak_score'] = np.empty((0, 1), dtype=np.float32)
 
         # Remove unwanted fields that come from the json file (if they exist)
         for k in ['date_captured', 'url', 'license', 'file_name']:
@@ -296,22 +291,14 @@ class JsonDataset(object):
         with open(proposal_file, 'rb') as f:
             proposals = pickle.load(f)
         id_field = 'indexes' if 'indexes' in proposals else 'ids'  # compat fix
-        if "True_rois" in proposals.keys():
-            True_rois_flag = "True_rois"
-            print("using True_rois")
-        else:
-            True_rois_flag = "boxes"
-            print("using boxes replace True_rois")
 
         _sort_proposals(proposals, id_field)
         box_list = []
-        True_rois_list = []
         mask_list = []
         for i, entry in enumerate(roidb):
             if i % 2500 == 0:
                 logger.info(' {:d}/{:d}'.format(i + 1, len(roidb)))
             boxes = proposals['boxes'][i]
-            True_rois = proposals[True_rois_flag][i]
 
             #####################
             #coco
@@ -331,7 +318,6 @@ class JsonDataset(object):
                 raise AssertionError
             # Remove duplicate boxes and very small boxes and then take top k
             boxes = box_utils.clip_boxes_to_image(boxes, entry['height'], entry['width'])
-            True_rois = box_utils.clip_boxes_to_image(True_rois, entry['height'], entry['width'])
 
             # keep = box_utils.unique_boxes(boxes)
             # boxes = boxes[keep, :]
@@ -339,14 +325,12 @@ class JsonDataset(object):
             # boxes = boxes[keep, :]
             if top_k > 0:
                 boxes = boxes[:top_k, :]
-                True_rois = True_rois[:top_k, :]
             box_list.append(boxes)
-            True_rois_list.append(True_rois)
-            
+
             masks = proposals['masks'][i]
             mask_list.append(masks)
 
-        _merge_proposal_boxes_into_roidb(roidb, box_list, mask_list, True_rois_list)
+        _merge_proposal_boxes_into_roidb(roidb, box_list, mask_list)
 
     def _add_prmmat_from_file(
         self, roidb, mat_file
@@ -357,59 +341,21 @@ class JsonDataset(object):
             prmmats = pickle.load(f)
         id_field = 'indexes' if 'indexes' in prmmats else 'ids'  # compat fix
         _sort_mats(prmmats, id_field)
-        if 'peak_score' in prmmats.keys() and 'iou_label' in prmmats.keys():
-            mat_list = []
-            iou_label_list = []
-            peak_score_list = []
-            for i, entry in enumerate(roidb):
-                if i % 2500 == 0:
-                    logger.info(' {:d}/{:d}'.format(i + 1, len(roidb)))
-                mat = prmmats['mat'][i]
-                iou_label = prmmats['iou_label'][i]
-                peak_score = prmmats['peak_score'][i]
-                # Sanity check that these boxes are for the correct image id
-                # assert entry['id'] == proposals[id_field][i]
-                if not str(entry['id']) == str(prmmats[id_field][i]):
-                    print(entry['id'])
-                    print(prmmats[id_field][i])
-                    raise AssertionError
-                mat_list.append(mat)
-                iou_label_list.append(iou_label)
-                peak_score_list.append(peak_score)
-            _merge_mat_into_roidb(roidb, mat_list, iou_label_list,peak_score_list)
-        elif 'iou_label' in prmmats.keys():
-            mat_list = []
-            iou_label_list = []
-            for i, entry in enumerate(roidb):
-                if i % 2500 == 0:
-                    logger.info(' {:d}/{:d}'.format(i + 1, len(roidb)))
-                ###!!!
-                mat = prmmats['mat'][i]  # .cpu().numpy()
-                iou_label = prmmats['iou_label'][i]
-                # Sanity check that these boxes are for the correct image id
-                # assert entry['id'] == proposals[id_field][i]
-                if not str(entry['id']) == str(prmmats[id_field][i]):
-                    print(entry['id'])
-                    print(prmmats[id_field][i])
-                    raise AssertionError
-                mat_list.append(mat)
-                iou_label_list.append(iou_label)
-            _merge_mat_into_roidb(roidb, mat_list, iou_label_list)
-        else:
-            mat_list = []
-            for i, entry in enumerate(roidb):
-                if i % 2500 == 0:
-                    logger.info(' {:d}/{:d}'.format(i + 1, len(roidb)))
-                ###!!!
-                mat = prmmats['mat'][i] # .cpu().numpy()
-                # Sanity check that these boxes are for the correct image id
-                # assert entry['id'] == proposals[id_field][i]
-                if not str(entry['id']) == str(prmmats[id_field][i]):
-                    print(entry['id'])
-                    print(prmmats[id_field][i])
-                    raise AssertionError
-                mat_list.append(mat)
-            _merge_mat_into_roidb(roidb, mat_list)
+
+        mat_list = []
+        for i, entry in enumerate(roidb):
+            if i % 2500 == 0:
+                logger.info(' {:d}/{:d}'.format(i + 1, len(roidb)))
+            ###!!!
+            mat = prmmats['mat'][i] # .cpu().numpy()
+            # Sanity check that these boxes are for the correct image id
+            # assert entry['id'] == proposals[id_field][i]
+            if not str(entry['id']) == str(prmmats[id_field][i]):
+                print(entry['id'])
+                print(prmmats[id_field][i])
+                raise AssertionError
+            mat_list.append(mat)
+        _merge_mat_into_roidb(roidb, mat_list)
 
 def add_proposals(roidb, rois, scales, crowd_thresh):
     """Add proposal boxes (rois) to an roidb that has ground-truth annotations
@@ -424,12 +370,11 @@ def add_proposals(roidb, rois, scales, crowd_thresh):
     _merge_proposal_boxes_into_roidb(roidb, box_list)
 
 
-def _merge_proposal_boxes_into_roidb(roidb, box_list, mask_list, True_rois_list):
+def _merge_proposal_boxes_into_roidb(roidb, box_list, mask_list):
     """Add proposal boxes to each roidb entry."""
     assert len(box_list) == len(roidb)
     for i, entry in enumerate(roidb):
         boxes = box_list[i]
-        True_rois = True_rois_list[i]
         masks = mask_list[i]
 
         entry['boxes'] = np.append(
@@ -438,13 +383,6 @@ def _merge_proposal_boxes_into_roidb(roidb, box_list, mask_list, True_rois_list)
             axis=0
         )
 
-        entry['True_rois'] = np.append(
-            entry['True_rois'],
-            True_rois.astype(entry['True_rois'].dtype, copy=False),
-            axis=0
-        )
-
-        # print(entry['masks'].shape, masks.shape)
         entry['masks'] = np.append(
             entry['masks'],
             masks.astype(entry['masks'].dtype, copy=False),
@@ -465,45 +403,14 @@ def _merge_gt_boxes_into_roidb(roidb, box_list):
         )
 
 
-def _merge_mat_into_roidb(roidb, mat_list, iou_label_list = None, peak_score_list=None):
+def _merge_mat_into_roidb(roidb, mat_list):
     """Add proposal boxes to each roidb entry."""
-    if peak_score_list is None and iou_label_list is None:
-        assert len(mat_list) == len(roidb)
-        for i, entry in enumerate(roidb):
-            mat = mat_list[i]
-            entry['mat'] = np.append(entry['mat'],
-                mat.astype(entry['mat'].dtype, copy=False),
-                axis=0)
-
-    elif not peak_score_list is None and not iou_label_list is None:
-        assert len(mat_list) == len(iou_label_list) == len(peak_score_list) == len(roidb)
-        for i, entry in enumerate(roidb):
-            mat = mat_list[i]
-            iou_label = iou_label_list[i]
-            peak_score = np.array(peak_score_list[i])
-            entry['mat'] = np.append(entry['mat'],
-                                     mat.astype(entry['mat'].dtype, copy=False),
-                                     axis=0)
-            entry['iou_label'] = np.append(entry['iou_label'],
-                                           iou_label.astype(entry['iou_label'].dtype, copy=False),
-                                           axis=0)
-            entry['peak_score'] = np.append(entry['peak_score'],
-                                            peak_score.astype(entry['peak_score'].dtype, copy=False),
-                                            axis=0)
-
-    else:
-        assert len(mat_list) == len(iou_label_list) == len(roidb)
-        for i, entry in enumerate(roidb):
-            mat = mat_list[i]
-            iou_label = iou_label_list[i]
-            entry['mat'] = np.append(entry['mat'],
-                                     mat.astype(entry['mat'].dtype, copy=False),
-                                     axis=0)
-            entry['iou_label'] = np.append(entry['iou_label'],
-                                           iou_label.astype(entry['iou_label'].dtype, copy=False),
-                                           axis=0)
-
-
+    assert len(mat_list) == len(roidb)
+    for i, entry in enumerate(roidb):
+        mat = mat_list[i]
+        entry['mat'] = np.append(entry['mat'],
+            mat.astype(entry['mat'].dtype, copy=False),
+            axis=0)
 
 
 def _sort_proposals(proposals, id_field):

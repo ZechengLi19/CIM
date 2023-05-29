@@ -166,24 +166,18 @@ def collate_minibatch(list_of_blobs):
             lists.append({'index': blobs.pop('index'),
                           'data' : blobs.pop('data'),
                           'rois' : blobs.pop('rois'),
-                          'True_rois' :blobs.pop('True_rois'),
                           'masks': blobs.pop('masks'),
                           'labels' : blobs.pop('labels'),
                           'mat' : blobs.pop('mat'),
-                          'iou_label':blobs.pop('iou_label'),
-                          'peak_score': blobs.pop('peak_score'),
                           'gtrois': blobs.pop('gtrois'),
                           'path': blobs.pop('path')
                           })
         except:
             lists.append({'data' : blobs.pop('data'),
                           'rois' : blobs.pop('rois'),
-                          'True_rois': blobs.pop('True_rois'),
                           'masks': blobs.pop('masks'),
                           'labels' : blobs.pop('labels'),
                           'mat' : blobs.pop('mat'),
-                          'iou_label': blobs.pop('iou_label'),
-                          'peak_score': blobs.pop('peak_score'),
                           'gtrois': blobs.pop('gtrois'),
                           'path': blobs.pop('path')})
     for i in range(0, len(list_of_blobs), cfg.TRAIN.IMS_PER_BATCH):

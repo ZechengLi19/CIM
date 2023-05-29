@@ -18,7 +18,6 @@ import cv2
 from tqdm import tqdm
 cv2.setNumThreads(0)  # pytorch issue 1355: possible deadlock in dataloader
 
-# sys.path.append('/mass1/jrou/apex/')
 # from apex import amp
 
 # import tools._init_paths
@@ -27,21 +26,18 @@ try:
     import _init_paths  # pylint: disable=unused-import
 except:
     import tools._init_paths
-    os.environ['CUDA_VISIBLE_DEVICES']='1'
 import nn as mynn
 import utils.net as net_utils
 import utils.misc as misc_utils
 from core.config import cfg, cfg_from_file, cfg_from_list, assert_and_infer_cfg
 from datasets.roidb import combined_roidb_for_training
 from roi_data.loader import RoiDataLoader, MinibatchSampler, BatchSampler, collate_minibatch
-# from lib.modeling.model_builder import Generalized_RCNN
-from modeling.my_model_builder import Generalized_RCNN
+from modeling.model_builder import Generalized_RCNN
 from utils.detectron_weight_helper import load_detectron_weight
 from utils.logging import setup_logging
 from utils.timer import Timer
 from utils.training_stats import TrainingStats
 import random
-from torchsummary import summary
 
 
 # Set up logging and load config options
@@ -57,25 +53,22 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Train a X-RCNN network')
 
     parser.add_argument(
-        '--dataset', dest='dataset', default = 'voc2012trainaug',# required=True,
+        '--dataset', dest='dataset', required=True,
         help='Dataset to use')
     parser.add_argument(
-        '--cfg', dest='cfg_file', default = 'configs/baselines/vgg16_cobsbd.yaml',# required=True,
+        '--cfg', dest='cfg_file', required=True,
         help='Config file for training (and optionally testing)')
     parser.add_argument(
         '--set', dest='set_cfgs',
         help='Set config keys. Key value sequence seperate by whitespace.'
              'e.g. [key] [value] [key] [value]',
         default=[], nargs='+')
-
-
     parser.add_argument(
         '--disp_interval',
         help='Display training info every N iterations',
         default=20, type=int)   # display interval
     parser.add_argument(
-        '--no_cuda', dest='cuda', help='Do not use CUDA device', action='store_false')  # 可通过args.cuda访问（相当于参数的别名，只是在命令行中仍然传--no_cuda）
-                                                                                        # “store_false”：如果传--no_cuda则no_cuda为False
+        '--no_cuda', dest='cuda', help='Do not use CUDA device', action='store_false')
     # Optimization
     # These options has the highest prioity and can overwrite the values in config file
     # or values set by set_cfgs. `None` means do not overwrite.
@@ -140,7 +133,6 @@ def save_ckpt(output_dir, args, step, train_size, model, optimizer):
     save_name = os.path.join(ckpt_dir, 'model_step{}.pth'.format(step))
     if isinstance(model, mynn.DataParallel):
         model = model.module
-    model_state_dict = model.state_dict()
     torch.save({
         'step': step,
         'train_size': train_size,
@@ -176,8 +168,7 @@ def main():
     else:
         raise ValueError("Need Cuda device to run !")
 
-    # 根据数据集设置类别数
-    if args.dataset == "coco2017":
+    if args.dataset == "coco2017train":
         cfg.TRAIN.DATASETS = ('coco_2017_train',)
         cfg.MODEL.NUM_CLASSES = 80
     elif args.dataset == 'voc2012trainaug':
@@ -186,7 +177,7 @@ def main():
     else:
         raise ValueError("Unexpected args.dataset: {}".format(args.dataset))
 
-    cfg_from_file(args.cfg_file)    # 添加配置 'configs/baselines/vgg16_cobsbd.yaml'
+    cfg_from_file(args.cfg_file)
     if args.set_cfgs is not None:
         cfg_from_list(args.set_cfgs)
     logger.info(pprint.pformat(cfg))
@@ -268,7 +259,7 @@ def main():
     dataset = RoiDataLoader(
         roidb,
         cfg.MODEL.NUM_CLASSES,
-        flag = cfg.transform_mode, # org, Totensor
+        flag = cfg.transform_mode,
         training=True)
 
 
@@ -440,7 +431,6 @@ def main():
                 input_data['path'] = input_data['path'][0]
                 net_outputs = model(**input_data)
 
-                # 将loss进行整合
                 training_stats.UpdateIterStats(net_outputs, inner_iter)
                 loss = net_outputs['total_loss']
                 loss.backward(retain_graph=True)

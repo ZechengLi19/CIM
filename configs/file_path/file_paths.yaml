@@ -8,8 +8,6 @@ voc:
     img_dir_val: /home/data2/Dataset/VOC2012/VOC2012_old/JPEGImages
     train_proposals: /home/data2/Dataset/VOC2012/VOC2012_old/COB_SBD_trainaug
     val_proposals: /home/data2/Dataset/VOC2012/VOC2012_old/output
-#    train_cob_propsal_file: /home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob/voc_2012_cobtrainaug_num200_resolution14.pkl
-#    val_cob_propsal_file: /home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob/voc_2012_sbdval_num200_resolution14.pkl
     train_cob_proposal_file: /home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob/voc_2012_cobtrainaug_num200_resolution7.pkl  # 将proposal记录为7*7的大小
     val_cob_proposal_file: /home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob/voc_2012_sbdval_num200_resolution7.pkl
 
@@ -28,8 +26,6 @@ voc:
     train_cls_iou_assign_file: /home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/label_assign/voc_2012_cls_iou_assign.pkl
 
     # super pixel model
-    sp_dir: /home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/sp_voc_dir
-
     train_super_pixels_file: /home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/sp_voc_dir/train_super_pixel_proposal.pkl
     val_super_pixels_file: /home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/sp_voc_dir/val_super_pixel_proposal.pkl
 
@@ -54,5 +50,3 @@ coco:
     test_cob_proposal_file: /home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob/coco_2017_test.pkl
     prm_path: /home/lzc/WSIS-Benchmark/pths/WSRCNN/prm_coco.pth
     train_assign_file: /home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/label_assign/coco_2017_assign.pkl # 伪标签位置
-    aff_prm_path:
-    train_aff_assign_file:
