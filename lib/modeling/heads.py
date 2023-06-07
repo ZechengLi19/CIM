@@ -206,11 +206,9 @@ class cls_iou_model(nn.Module):
         orphan_in_detectron = []
         return detectron_weight_mapping, orphan_in_detectron
 
-    def forward(self, seg_feature,out_seg_feature, diff_feature):
+    def forward(self, seg_feature):
         if seg_feature.dim() == 4:
             seg_feature = seg_feature.squeeze(3).squeeze(2)
-            out_seg_feature = out_seg_feature.squeeze(3).squeeze(2)
-            diff_feature = diff_feature.squeeze(3).squeeze(2)
 
         # WSDDN
         predict_cls = self.classifier(seg_feature)

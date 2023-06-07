@@ -1,6 +1,3 @@
-# Author: Eric Tan
-# Creation Date: 2021/09/29
-# ---------------------------
 import pickle
 from functools import wraps
 import importlib
@@ -13,15 +10,7 @@ from torch.autograd import Variable
 import scipy.io as io
 
 from core.config import cfg
-# from model.pcl.peak_guided_cluster import PCL
-from model.pcl.pcl import PCL
-# from model.pcl_losses.functions.pcl_losses import PCLLosses
-from model.pcl.pcl import PCLLosses     # 使用pcl文件夹中的PCLLosses，不确定是否正确
 
-# 不用C编译，用mmcv
-# from model.roi_pooling.functions.roi_pool import RoIPoolFunction
-# from model.roi_crop.functions.roi_crop import RoICropFunction
-# from modeling.roi_xfrom.roi_align.functions.roi_align import RoIAlignFunction
 from ops import RoIPool, RoIAlign
 
 import modeling.heads as heads
@@ -29,6 +18,7 @@ import utils.blob as blob_utils
 import utils.net as net_utils
 import utils.vgg_weights_helper as vgg_utils
 import utils.resnet_weights_helper as resnet_utils
+import utils.hrnet_weights_helper as hrnet_utils
 from utils.boxes import bbox_overlaps
 from utils.boxes import box_iou
 import numpy as np
@@ -148,12 +138,16 @@ class Generalized_RCNN(nn.Module):
 
 
     def _init_modules(self):
-        if not cfg.VGG_CLS_FEATURE:
-            if cfg.MODEL.LOAD_IMAGENET_PRETRAINED_WEIGHTS:  # True
-                vgg_utils.load_pretrained_imagenet_weights(self)    # 加载预训练模型
-        if not cfg.ResNet_CLS_FEATURE:
-            if cfg.MODEL.LOAD_IMAGENET_PRETRAINED_WEIGHTS:  # True
-                resnet_utils.load_pretrained_imagenet_weights(self)
+        if cfg.VGG_CLS_FEATURE:
+            if cfg.MODEL.LOAD_IMAGENET_PRETRAINED_WEIGHTS:
+                vgg_utils.load_pretrained_imagenet_weights(self)
+        # resnet using pre-trained weight from torch
+        # if not cfg.ResNet_CLS_FEATURE:
+        #     if cfg.MODEL.LOAD_IMAGENET_PRETRAINED_WEIGHTS:  # True
+        #         resnet_utils.load_pretrained_imagenet_weights(self)
+        if cfg.HRNET_CLS_FEATURE:
+            if cfg.MODEL.LOAD_IMAGENET_PRETRAINED_WEIGHTS:
+                hrnet_utils.load_pretrained_imagenet_weights(self)
         if cfg.TRAIN.FREEZE_CONV_BODY:  # false
             for p in self.Conv_Body.parameters():
                 p.requires_grad = False
@@ -178,18 +172,14 @@ class Generalized_RCNN(nn.Module):
 
             masks.requires_grad = False
 
-            seg_x, out_seg_x, diff_seg_x = self.Box_Head(blob_conv, rois, masks.detach())
+            seg_x = self.Box_Head(blob_conv, rois, masks.detach())
 
             file_name = os.path.splitext(os.path.split(path)[1])[0]
-            if "_" in file_name:
-                iou_dir = "/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob_iou/VOC2012"
-                asy_iou_dir = "/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob_asy_iou/VOC2012"
 
-            else:
-                iou_dir = "/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob_iou/coco2017"
-                asy_iou_dir = "/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob_asy_iou/coco2017"
+            iou_dir = cfg.iou_dir
+            asy_iou_dir = cfg.asy_iou_dir
 
-            predict_cls, predict_det, ref_cls_score, ref_iou_score = self.cls_iou_model(seg_x, out_seg_x, diff_seg_x)
+            predict_cls, predict_det, ref_cls_score, ref_iou_score = self.cls_iou_model(seg_x)
             iou_map = None
             asy_iou_map = None
 

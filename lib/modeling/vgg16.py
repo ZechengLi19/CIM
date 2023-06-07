@@ -182,7 +182,7 @@ class roi_2mlp_head_refine_model_mask_fuse(nn.Module):
         box_mask_cat = self.mask_branch(box_mask_cat)
         seg_x = self.seg_fc(box_mask_cat.view(batch_size, -1))
 
-        return seg_x, None,None
+        return seg_x
 
 def freeze_params(m):
     """Freeze all the weights by setting requires_grad to False

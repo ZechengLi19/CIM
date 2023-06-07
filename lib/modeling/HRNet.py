@@ -311,7 +311,7 @@ class HighResolutionNet(nn.Module):
 
         self.classifier = nn.Linear(2048, 1000)
 
-        self.FREEZE_AT = 2
+        self.FREEZE_AT = cfg.HRNET.FREEZE_AT
 
         self.spatial_scale = 1 / 32
 
@@ -585,28 +585,28 @@ class HighResolutionNet(nn.Module):
 
         return y
 
-    def init_weights(self, pretrained="/home/data2/lzc/WSIS-Benchmark/pths/WSRCNN/hrnetv2_w48_imagenet_pretrained.pth", ):
-        # self.load_state_dict(torch.load(pth, map_location="cpu"))
-        # print("Loading pretrain weight")
-        # logger.info('=> init weights from normal distribution')
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(
-                    m.weight, mode='fan_out', nonlinearity='relu')
-            elif isinstance(m, nn.BatchNorm2d):
-                nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
-        if os.path.isfile(pretrained):
-            pretrained_dict = torch.load(pretrained)
-            # logger.info('=> loading pretrained model {}'.format(pretrained))
-            model_dict = self.state_dict()
-            pretrained_dict = {k: v for k, v in pretrained_dict.items()
-                               if k in model_dict.keys()}
-            # for k, _ in pretrained_dict.items():
-            #     logger.info(
-            #         '=> loading {} pretrained model {}'.format(k, pretrained))
-            model_dict.update(pretrained_dict)
-            self.load_state_dict(model_dict)
+    # def init_weights(self, pretrained="/home/data2/lzc/WSIS-Benchmark/pths/WSRCNN/hrnetv2_w48_imagenet_pretrained.pth", ):
+    #     # self.load_state_dict(torch.load(pth, map_location="cpu"))
+    #     # print("Loading pretrain weight")
+    #     # logger.info('=> init weights from normal distribution')
+    #     for m in self.modules():
+    #         if isinstance(m, nn.Conv2d):
+    #             nn.init.kaiming_normal_(
+    #                 m.weight, mode='fan_out', nonlinearity='relu')
+    #         elif isinstance(m, nn.BatchNorm2d):
+    #             nn.init.constant_(m.weight, 1)
+    #             nn.init.constant_(m.bias, 0)
+    #     if os.path.isfile(pretrained):
+    #         pretrained_dict = torch.load(pretrained)
+    #         # logger.info('=> loading pretrained model {}'.format(pretrained))
+    #         model_dict = self.state_dict()
+    #         pretrained_dict = {k: v for k, v in pretrained_dict.items()
+    #                            if k in model_dict.keys()}
+    #         # for k, _ in pretrained_dict.items():
+    #         #     logger.info(
+    #         #         '=> loading {} pretrained model {}'.format(k, pretrained))
+    #         model_dict.update(pretrained_dict)
+    #         self.load_state_dict(model_dict)
 
 
 class roi_2mlp_head_refine_model_mask_fuse(nn.Module):
@@ -653,11 +653,11 @@ class roi_2mlp_head_refine_model_mask_fuse(nn.Module):
         box_mask_cat = self.mask_branch(box_mask_cat)
         seg_x = self.seg_fc(box_mask_cat.view(batch_size, -1))
 
-        return seg_x, None,None
+        return seg_x
 
 def get_HRNet():
     model = HighResolutionNet()
-    model.init_weights()
+    # model.init_weights()
 
     return model
 

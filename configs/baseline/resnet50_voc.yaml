@@ -1,36 +1,19 @@
 MODEL:
   TYPE: generalized_rcnn
   CONV_BODY: resnet50.torch_resnet50
-  LOAD_IMAGENET_PRETRAINED_WEIGHTS: False
+  LOAD_IMAGENET_PRETRAINED_WEIGHTS: True
 
 NUM_GPUS: 2
-WSDDN_BRANCH: False    # False
-PCL_BRANCH:   False   # False
-PPSN_BRANCH:  True   # True
-PPSN_LOSS_FUNCTION: 'CELoss_nr' #  CELoss_nr two_CELoss milmax_v2 graph_two_Loss pmil_agg_v1
-MaskAlign: True # True  False
-VGG_CLS_FEATURE: False # True
-GLOBAL_LOSS: False
-DYNAMIC_LABEL: False
-ADD_CONV: False
-GCN: False
-GCN2: False
-GCN3: False
-MASK_IOU: False
-GAP: False
-GCN_PPSN: False
-SCORE: False
-iou_label: True
-refine_model_v2: True
-Super_pixel_GNN: False
 REFINE_TIMES: 3
 DEDUP_BOXES: 0.0
 transform_mode: ToTensor
 step_rate: 0.1
 easy_case_mining: True
 
+iou_dir: "./data/cob_iou/VOC2012"
+asy_iou_dir: "./data/cob_asy_iou/VOC2012"
+
 ResNet:
-  IMAGENET_PRETRAINED_WEIGHTS: ''
   FREEZE_AT: 2
 
 SOLVER:
@@ -52,17 +35,16 @@ TRAIN:
   MAX_SIZE: 2000
   IMS_PER_BATCH: 1
   BATCH_SIZE_PER_IM: 4096
-  PROPOSAL_FILES: ('/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob/voc_2012_cobtrainaug_num200_resolution7.pkl',) # edit
-  REFINE_FILES: ("/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/label_assign/voc_2012_prmref_assign_bg_filter_0.pkl",)
+  PROPOSAL_FILES: ('./data/cob/voc_2012_trainaug.pkl',) # edit
+  REFINE_FILES: ("./data/label_assign/voc_2012_label_assign.pkl",)
 TEST:
-  SCORE_THRESH: 1e-5  # 0.2
-  PROPOSAL_FILTER: False # True
+  SCORE_THRESH: 1e-5
+  PROPOSAL_FILTER: False
   SCALE: 480
   MAX_SIZE: 2000
   NMS: 0.3
-  PROPOSAL_FILES: ('/home/lzc/WSIS-Benchmark/code/WSRCNN-troch1.6/data/cob/voc_2012_sbdval_num200_resolution7.pkl',)
+  PROPOSAL_FILES: ('./data/cob/voc_2012_val.pkl',)
   BBOX_AUG:
-#    ENABLED: False
     ENABLED: True
     H_FLIP: True
     SCALES: (576, 688, 864, 1200)

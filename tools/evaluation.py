@@ -45,15 +45,16 @@ from datasets.json_inference import coco_inst_seg_eval
 
 def parse_args():
     """Parse in command line arguments"""
-    parser = argparse.ArgumentParser(description='Test a Fast R-CNN network')
+    parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--dataset', default='coco2017',
+        '--dataset', required=True, choices=["coco2017val", "coco2017test","voc2012sbdval"],
         help='training dataset')
     parser.add_argument(
-        '--cfg', dest='cfg_file', default='configs/baselines/vgg16_cobcoco2017_semantic.yaml',  # required=True,
+        '--cfg', dest='cfg_file', required=True,
         help='optional config file')
     parser.add_argument(
-        '--result_path', default='/mass/wsk/eccv2020_ppsn-master/Outputs/vgg16_cobcoco2014_em/BWSIS/v3/detections.pkl',
+        '--result_path',required=True,
+        default='./detections.pkl',
         help='the path for result file.')
     parser.add_argument(
         '--output_dir',
@@ -63,6 +64,9 @@ def parse_args():
         help='set config keys, will overwrite config in the cfg_file.'
              ' See lib/core/config.py for all options',
         default=[], nargs='*')
+    parser.add_argument(
+        '--total_process', dest='total_process', default=24,type=float,
+        help='number of processes')
     return parser.parse_args()
 
 def eval(name, total, roidb):
@@ -158,11 +162,22 @@ if __name__ == '__main__':
         cfg.MODEL.NUM_CLASSES = 80
         annFile = None # upload to website for evaluation
 
+    elif args.dataset == "coco2017train":
+        cfg.TEST.DATASETS = ('coco_2017_train',)
+        cfg.MODEL.NUM_CLASSES = 80
+        cfg.TEST.PROPOSAL_FILES = cfg.TRAIN.PROPOSAL_FILES
+        annFile=None
+
     elif args.dataset == 'voc2012sbdval':
         cfg.TEST.DATASETS = ('voc_2012_sbdval',)
         cfg.MODEL.NUM_CLASSES = 20
         annFile="./data/VOC2012/annotations/voc_2012_val.json"
 
+    elif args.dataset == 'voc2012trainaug':
+        cfg.TEST.DATASETS = ('voc_2012_trainaug',)
+        cfg.MODEL.NUM_CLASSES = 20
+        cfg.TEST.PROPOSAL_FILES = cfg.TRAIN.PROPOSAL_FILES
+        annFile = None
     else:
         assert cfg.TEST.DATASETS, 'cfg.TEST.DATASETS shouldn\'t be empty'
     assert_and_infer_cfg()
@@ -180,7 +195,7 @@ if __name__ == '__main__':
     num_images = len(roidb)
     num_classes = cfg.MODEL.NUM_CLASSES + 1
 
-    total_process = 12
+    total_process = args.total_process
     proposal_size_limit = (0.00002, 0.85)
     jobs = []
     for i in range(total_process):

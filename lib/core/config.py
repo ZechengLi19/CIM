@@ -430,6 +430,17 @@ __C.ResNet.IMAGENET_PRETRAINED_WEIGHTS = ''
 # Use GroupNorm instead of BatchNorm
 __C.ResNet.USE_GN = False
 
+#### HRNET
+__C.HRNET = AttrDict()
+
+# Freeze model weights before and including which block.
+__C.HRNET.FREEZE_AT = 2
+
+# Path to pretrained resnet weights on ImageNet.
+# If start with '/', then it is treated as a absolute path.
+# Otherwise, treat as a relative path to __C.ROOT_DIR
+__C.HRNET.IMAGENET_PRETRAINED_WEIGHTS = ''
+
 # ---------------------------------------------------------------------------- #
 # GroupNorm options
 # ---------------------------------------------------------------------------- #
@@ -524,72 +535,20 @@ __C.PYTORCH_VERSION_LESS_THAN_040 = False
 __C.TRAIN.REFINE_FILES = ()
 __C.TEST.REFINE_FILES = ()
 
-__C.WSDDN_BRANCH = False
-__C.PCL_BRANCH = False
-__C.PPSN_BRANCH = True
-__C.PPSN_LOSS_FUNCTION = ''
 __C.MaskAlign = True
-__C.ResNet_CLS_FEATURE = True
-__C.VGG_CLS_FEATURE = True
-__C.VGG_CLS_PATHBASE = ''
-__C.GLOBAL_LOSS = False
-__C.DYNAMIC_LABEL = False
-__C.ADD_CONV = False
-__C.GCN = False
-__C.GCN2 = False
-__C.GCN3 = False
-__C.MASK_IOU = False
-__C.GAP = False
-__C.GCN_PPSN = False
-__C.iou_label = False
-__C.SCORE = False
-__C.refine_model = False
-__C.refine_model_v2 = False
-__C.refine_model_class_agnostic = False
-__C.Super_pixel_GNN = False
-__C.refine_model_GNN = False
-__C.refine_model_ms_rcnn = False
-__C.refine_model_context = False
-__C.refine_model_bbox_aware = False
-__C.refine_model_fg_aware = False
-__C.refine_model_mask_fuse = False
-__C.refine_model_top1 = False
-__C.refine_model_step_diffuse = False
-__C.refine_model_big_ban = False
-__C.refine_model_visual = False
-__C.refine_model_sample = False
-__C.refine_model_bu = False
-__C.refine_model_inner_cls = False
-__C.refine_model_wsod2 = False
-__C.refine_model_pamr = False
-__C.refine_model_wsddn = False
-__C.refine_model_DC = False
-__C.refine_model_v2_kl_loss = False
+__C.VGG_CLS_FEATURE = False
+__C.ResNet_CLS_FEATURE = False
+__C.HRNET_CLS_FEATURE = False
 __C.easy_case_mining = False
-__C.test_mode = False
-__C.diffuse_step = 120000
 
-__C.refine_model_cal = False
-__C.after_diffuse = False
-__C.cal_refine_branch = 2
 __C.topk = 0.1
 
-__C.refine_model_visual_dir = ""
-
 __C.step_rate = 0.
-
 __C.adj_thr = 0.85 # follow
 __C.transform_mode = 'org'
 
-__C.Domain_loss_scale = 1
-
-## ablation study
-__C.refine_model_ab1 = False
-__C.refine_model_ab2 = False
-__C.refine_model_ab3 = False
-__C.refine_model_ab4 = False
-__C.refine_model_ab5 = False
-
+__C.iou_dir = ''
+__C.asy_iou_dir = ''
 
 __C.TEST.PROPOSAL_FILTER = True
 __C.TEST.BG_THRESHOLD = 0.1

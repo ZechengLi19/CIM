@@ -49,7 +49,8 @@ For simplicity, our datasets are structured in the following way:
 ├── model_weight/
 │   ├── prm_voc.pth
 │   ├── prm_coco.pth
-│   └── vgg16_caffe.pth
+│   ├── vgg16_caffe.pth
+│   └── hrnetv2_w48_imagenet_pretrained.pth
 │ 
 ├── label_assign/
 │   ├── voc_2012_label_assign.pkl
@@ -73,42 +74,24 @@ For simplicity, our datasets are structured in the following way:
 ```
 
 #### Note: 
-- VOC2012/annotations is a folder containing label files in json format.
-- VOC2012/COB_SBD_trainaug and VOC2012/COB_SBD_val are folders containing COB files.
-- coco2017/COB-COCO is a folder containing COB files.
-- model_weight/ is a folder containing weight of models. Weights can be downloaded from [here](https://drive.google.com/drive/folders/1kzFsaPlbYK0OY31a7vqsRLDaJQ2BbAs0?usp=sharing).
-- label_assign/ contains pre-computed pseudo labels for VOC2012 and COCO2017 datasets, link is [here](https://drive.google.com/drive/folders/1j44PAimT7v4RkkOlKbbqcCLAiNf9sXjN?usp=sharing). It also can be created by running **`tools\prm_tools\prm_label_assign.py`**.
-- cob is a folder containing two dataset proposals. The pkl files contain proposals that are scaled to a size of 7*7. These files will be used in RoiAlign operation.
-- cob_iou/ can be downloaded from [here](https://drive.google.com/drive/folders/1BwS_FaM9OOWzpjAR5Tul2gLgFbv0iN9X?usp=sharing). It also can be created by running **`tools\prm_tools\create_cob_iou.py`**.
-- cob_asy_iou/ can be downloaded from [here](https://drive.google.com/drive/folders/1PZfP9Wz0uL33wMcY6wX--C6Wb_cH1ZHT?usp=sharing). It also can be created by running **`tools\prm_tools\create_cob_asy_iou.py`**.
+- **`VOC2012/annotations/`** is a folder containing label files in json format.
+- **`VOC2012/COB_SBD_trainaug/`** and **`VOC2012/COB_SBD_val/`** are folders containing COB files. 
+- **`coco2017/COB-COCO/`** is a folder containing COB files.
+- **`model_weight/`**  is a folder containing weight of models. Weights can be downloaded from [here](https://drive.google.com/drive/folders/1kzFsaPlbYK0OY31a7vqsRLDaJQ2BbAs0?usp=sharing). hrnetv2_w48_imagenet_pretrained.pth can be downloaded from [here](https://github.com/HRNet/HRNet-Image-Classification)
+- **`label_assign/`** contains pre-computed pseudo labels for VOC2012 and COCO2017 datasets, link is [here](https://drive.google.com/drive/folders/1j44PAimT7v4RkkOlKbbqcCLAiNf9sXjN?usp=sharing). It also can be created by running **`python tools/pre/AGPL_label_assign.py`**.
+- **`cob/`** is a folder containing two dataset proposals. The pkl files contain proposals that are scaled to a size of 7*7. These files will be used in RoiAlign operation. They can be downloaded from [here](https://drive.google.com/drive/folders/144_iTb57xnvBL8R7eDm2U_WF1UBQCtYz?usp=sharing). They also can be created by running **`python tools/pre/generate_7_7_voc.py`** and **`python tools/pre/generate_7_7_coco.py`**. 
+- **`cob_iou/`** can be downloaded from [here](https://drive.google.com/drive/folders/1BwS_FaM9OOWzpjAR5Tul2gLgFbv0iN9X?usp=sharing). It also can be created by running **`python tools/pre/create_cob_iou.py`**.
+- **`cob_asy_iou/`** can be downloaded from [here](https://drive.google.com/drive/folders/1PZfP9Wz0uL33wMcY6wX--C6Wb_cH1ZHT?usp=sharing). It also can be created by running **`python tools/pre/create_cob_asy_iou.py`**.
 
 ## Experiments
 ### Training
-We use the following script to train CIM model.
-
-```bash
-python -u ./tools/train.py \
---dataset {dataset} (i.e. "voc2012trainaug" or "coco2017train")  \
---cfg {config} (i.e. "./configs/baseline/resnet50_voc.yaml")
-```
+We use `bash ./scripts/train_CIM.sh` to train CIM model.
 
 ### Evaluation
-We use the following script to evaluate CIM model.
+We use `bash ./scripts/eval_CIM.sh` to evaluate CIM model.
 
-```bash
-cfg_file={config} (i.e. "./configs/baseline/resnet50_voc.yaml")
-output_file={output folder} (i.e. "./Outputs/resnet50_voc/Mar22-00-46-22_user-Super-Server_step")
-dataset={dataset} (i.e. "voc2012sbdval", "coco2017val" or "coco2017test")
-iter_time={iter} (i.e. "model_step44999")
-
-ckpt=${output_file}/ckpt/${iter_time}.pth
-result_pkl=${output_file}/test/${iter_time}/detections.pkl
-
-python -u tools/evaluation.py \
---cfg ${cfg_file} \
---result_path ${result_pkl} \
---dataset ${dataset}
-```
+## Mask R-CNN Refinement
+We use `bash ./scripts/generate_msrcnn_label.sh` to generate pseudo labels from CIM for training Mask R-CNN. We use Mask R-CNN implemented by mmdetection for Mask R-CNN Refinement.
 
 ## Results
 Results of instance segmentation on the VOC2012 and COCO datasets can be downloaded [here](https://drive.google.com/file/d/14TuME6jLEMdlD6HUMSLHDv09oMwE0K_3/view?usp=share_link).

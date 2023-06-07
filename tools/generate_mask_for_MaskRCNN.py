@@ -49,20 +49,19 @@ cv2.ocl.setUseOpenCL(False)
 
 
 def parse_args():
-    """Parse in command line arguments"""
-    parser = argparse.ArgumentParser(description='Test a Fast R-CNN network')
+    parser = argparse.ArgumentParser(description='Generate pseudo labels for Mask-RCNN training')
     parser.add_argument(
-        '--dataset', default='',
+        '--dataset', required=True, choices=["voc2012trainaug", "coco2017train"],
         help='training dataset')
     parser.add_argument(
-        '--cfg', dest='cfg_file', default='',  # required=True,
+        '--cfg', dest='cfg_file', required=True,
         help='optional config file')
     parser.add_argument(
-        '--result_path',
+        '--result_path', required=True,
         default='./discovery.pkl',
         help='the path for result file.')
     parser.add_argument(
-        '--output_dir',
+        '--output_dir', required=True,
         help='output directory to save the testing results.')
     parser.add_argument(
         '--is_best', default=False,
@@ -72,7 +71,9 @@ def parse_args():
         help='set config keys, will overwrite config in the cfg_file.'
              ' See lib/core/config.py for all options',
         default=[], nargs='*')
-
+    parser.add_argument(
+        '--total_process', dest='total_process', default=24,type=float,
+        help='number of processes')
     return parser.parse_args()
 
 def eval(name, total,coco_output, roidb):
@@ -88,60 +89,33 @@ def eval(name, total,coco_output, roidb):
             continue
         if idx >= (int(name) + 1) * len(roidb) // total:
             continue
-        try:
-            boxes = all_boxes[entry['image']]
-        except:
-            boxes = all_boxes[
-                entry['image'].replace('/mass/wsk/eccv2020_ppsn-master/', '/mnt/th/Pycharm_Projects/EM_wsk_refine/')]
+        boxes = all_boxes[entry['image']]
         scores = boxes['scores']
 
         (filepath, tempfilename) = os.path.split(entry['image'])
-        (filename, extension) = os.path.splitext(tempfilename)
 
-        # if args.dataset == "coco2017train":
-        #     file_name = 'COCO_val2014_' + entry['image'][-16:-4] + '.json'
-        #     if not os.path.exists(os.path.join('data/coco2014/COB-COCO-json', file_name)):
-        #         file_name = 'COCO_train2014_' + entry['image'][-16:-4] + '.json'
-        #     with open(os.path.join('data/coco2014/COB-COCO-json', file_name)) as f_obj:
-        #         file = json.load(f_obj)
-        #     mask_proposals = []
-        #     for item in file:
-        #         mask_proposals.append(maskUtils.decode(item))
-        #     mask_proposals = np.array(mask_proposals)
-        #
-        #     # file_name = 'COCO_val2014_' + entry['image'][-16:-4] + '.mat'
-        #     # if not os.path.exists(os.path.join('data/coco2014/COB-COCO', file_name)):
-        #     #     file_name = 'COCO_train2014_' + entry['image'][-16:-4] + '.mat'
-        #     # COB_proposals = scipy.io.loadmat(
-        #     #     os.path.join('data/coco2014/COB-COCO', file_name),
-        #     #     verify_compressed_data_integrity=False)['maskmat']
-        #     # mask_proposals = COB_proposals.copy()
-        #     num_proposal = len(mask_proposals)
-        # else:
-        #     mask_proposals = scipy.io.loadmat(
-        #         os.path.join('data/coco2014/COB-COCO', entry['image'][-29:-4] + '.mat'),
-        #         verify_compressed_data_integrity=False)['maskmat'].copy()
-        #     # mask_proposals = COBmat.copy()
-        #     num_proposal = len(mask_proposals)
         if "coco" in args.dataset:
-            cob_original_file = '/home/lzc/WSIS-Benchmark/dataset/coco2017/COB-COCO'
+            base_path = "./data/coco2017/COB-COCO"
+
             file_n = entry['image'].split("/")[-1].replace(".jpg", ".mat")
             file_name = 'COCO_train2014_' + file_n
-            if not os.path.exists(os.path.join(cob_original_file, file_name)):
+            if not os.path.exists(os.path.join(base_path, file_name)):
                 file_name = 'COCO_val2014_' + file_n
-            if not os.path.exists(os.path.join(cob_original_file, file_name)):
+            if not os.path.exists(os.path.join(base_path, file_name)):
                 file_name = file_n
             mask_proposals = scipy.io.loadmat(
-                os.path.join(cob_original_file, file_name),
+                os.path.join(base_path, file_name),
                 verify_compressed_data_integrity=False)['maskmat'].copy()
             cls_num = 81
 
         else:
             file_name = entry['image'][-15:-4]
             try:
-                mask_proposals = loadmat(os.path.join('/home/lzc/WSIS-Benchmark/dataset/VOCdevkit/VOC2012/output', file_name + '.mat'))['maskmat'][:, 0]
+                base_path = "./data/VOC2012/COB_SBD_trainaug"
+                mask_proposals = loadmat(os.path.join(base_path, file_name + '.mat'))['maskmat'][:, 0]
             except:
-                mask_proposals = loadmat(os.path.join('/home/lzc/WSIS-Benchmark/dataset/VOCdevkit/VOC2012/COB_SBD_trainaug', file_name + '.mat'))['maskmat'][:, 0]
+                base_path = "./data/VOC2012/COB_SBD_val"
+                mask_proposals = loadmat(os.path.join(base_path, file_name + '.mat'))['maskmat'][:, 0]
 
             cls_num = 21
 
@@ -150,7 +124,6 @@ def eval(name, total,coco_output, roidb):
         scores, boxes, cls_boxes, cls_inds = mask_results_with_nms_and_limit_get_index(cfg, scores, boxes['boxes'],
                                                                                        DETECTIONS_PER_IM)
 
-        # img_id = int(entry['id'])
         img_size = (entry['width'], entry['height'])
         if cls_num == 21:
             image_info = pycococreatortools.create_image_info(img_id, entry['image'][-15:-4] + ".jpg", img_size)
@@ -159,21 +132,15 @@ def eval(name, total,coco_output, roidb):
 
         coco_output["images"].append(image_info)
 
-        for cls_idx in range(1, cls_num):  # cls_idx =1
-
+        for cls_idx in range(1, cls_num):
             if entry['gt_classes'][0][cls_idx - 1] > 0:
-                # result_mask = np.zeros((0, mask_proposals.shape[1], mask_proposals.shape[2]),
-                #                        dtype=mask_proposals.dtype)
                 cls_instance_idx = list(np.argsort(np.array(cls_boxes[cls_idx].copy()[:, 4])))
                 cls_instance_idx.reverse()
                 if len(cls_instance_idx) == 0:
                     continue
                 best_score = cls_boxes[cls_idx][cls_instance_idx[0]][4].astype(np.float64)
-                #  sort the result according to the score
-                # tmp = [True for i in range(len(cls_instance_idx))]
                 for i in range(len(cls_instance_idx)):
                     instance_idx = cls_instance_idx[i]
-                    # img_id = int(entry['id'])
                     score = cls_boxes[cls_idx][instance_idx][4].astype(np.float64)
                     if not args.is_best:
                         if score == best_score:
@@ -183,19 +150,7 @@ def eval(name, total,coco_output, roidb):
                                 category_id = coco_nummap_id[int(cls_idx) - 1]
                             COB_ind = cls_inds[cls_idx][instance_idx]
                             mask = mask_proposals[COB_ind]
-                            # result_mask = np.append(result_mask, np.expand_dims(mask, axis=0), axis=0)
                             category_info = {'id': category_id, 'is_crowd': False}
-                            # annotation_info = pycococreatortools.create_annotation_info_v1(
-                            #     instance_id, img_id, category_info, mask,
-                            #     np.asscalar(cls_boxes[cls_idx][instance_idx][4]),
-                            #     (entry['width'], entry['height']), tolerance=0)
-                            # 将 best score 的 score 抬高
-
-                            # best score + 1
-                            # annotation_info = pycococreatortools.create_annotation_info_v1(
-                            #     instance_id, img_id, category_info, mask,
-                            #     np.asscalar(cls_boxes[cls_idx][instance_idx][4] + 1),
-                            #     (entry['width'], entry['height']), tolerance=0)
 
                             # best score keep
                             annotation_info = pycococreatortools.create_annotation_info_v1(
@@ -211,13 +166,6 @@ def eval(name, total,coco_output, roidb):
                                 category_id = coco_nummap_id[int(cls_idx) - 1]
                             COB_ind = cls_inds[cls_idx][instance_idx]
                             mask = mask_proposals[COB_ind]
-                            # iou_inside = mask_inside(np.expand_dims(mask, axis=0), result_mask)[0]
-                            # if np.array(iou_inside > 0.3).any():
-                            #     continue
-                            # iou_outside = mask_outside(np.expand_dims(mask, axis=0), result_mask)[0]
-                            # if np.array(iou_outside > 0.3).any():
-                            #     continue
-                            # result_mask = np.append(result_mask, np.expand_dims(mask, axis=0), axis=0)
                             category_info = {'id': category_id, 'is_crowd': False}
                             annotation_info = pycococreatortools.create_annotation_info_v1(
                                 instance_id, img_id, category_info, mask,
@@ -233,7 +181,6 @@ def eval(name, total,coco_output, roidb):
                                 category_id = coco_nummap_id[int(cls_idx) - 1]
                             COB_ind = cls_inds[cls_idx][instance_idx]
                             mask = mask_proposals[COB_ind]
-                            # result_mask = np.append(result_mask, np.expand_dims(mask, axis=0), axis=0)
                             category_info = {'id': category_id, 'is_crowd': False}
                             annotation_info = pycococreatortools.create_annotation_info_v1(
                                 instance_id, img_id, category_info, mask,
@@ -259,7 +206,6 @@ if __name__ == '__main__':
     logger.info('Called with args:')
     logger.info(args)
 
-    # args.result_path = 'Outputs/vgg16_cobsbd_beforeECCVddl/cob-wsddn-maskpooling/TIP_test/model_step44999/discovery.pkl'
     if args.result_path:
         while not os.path.exists(args.result_path):
             logger.info('Waiting for {} to exist...'.format(args.result_path))
@@ -274,39 +220,20 @@ if __name__ == '__main__':
         merge_cfg_from_file(args.cfg_file)
     if args.set_cfgs is not None:
         merge_cfg_from_list(args.set_cfgs)
-    if args.cfg_file is not None:
-        merge_cfg_from_file(args.cfg_file)
-    if args.set_cfgs is not None:
-        merge_cfg_from_list(args.set_cfgs)
 
-    if args.dataset == "coco2017val":
-        cfg.TEST.DATASETS = ('coco_2017_val',)
-        cfg.MODEL.NUM_CLASSES = 80
-        annFile="/home/lzc/WSIS-Benchmark/dataset/coco2017/annotations/instances_val2017.json"
-        val_json = json.load(open('/home/lzc/WSIS-Benchmark/dataset/coco2017/annotations/instances_val2017.json'))
-
-    elif args.dataset == "coco2017train":
+    if args.dataset == "coco2017train":
         cfg.TEST.DATASETS = ('coco_2017_train',)
         cfg.MODEL.NUM_CLASSES = 80
         cfg.TEST.PROPOSAL_FILES = cfg.TRAIN.PROPOSAL_FILES
-        annFile="/home/lzc/WSIS-Benchmark/dataset/coco2017/annotations/instances_train2017.json"
-        val_json = json.load(open('/home/lzc/WSIS-Benchmark/dataset/coco2017/annotations/instances_val2017.json'))
+        annFile="./data/coco2017/annotations/instances_train2017.json"
+        val_json = json.load(open('./data/coco2017/annotations/instances_val2017.json'))
 
-    elif args.dataset == 'voc2012sbdval':
-        cfg.TEST.DATASETS = ('voc_2012_sbdval',)
-        cfg.MODEL.NUM_CLASSES = 20
-        annFile="/home/lzc/WSIS-Benchmark/dataset/VOCdevkit/VOC2012/annotations/voc_2012_val.json"
-        val_json = json.load(open('/home/lzc/WSIS-Benchmark/dataset/VOCdevkit/VOC2012/annotations/voc_2012_val.json'))
-
-    elif args.dataset == 'voc2012sbdval_style':
-        cfg.TEST.DATASETS = ('voc_2012_sbdval_style',)
-        cfg.MODEL.NUM_CLASSES = 20
     elif args.dataset == 'voc2012trainaug':
         cfg.TEST.DATASETS = ('voc_2012_trainaug',)
         cfg.MODEL.NUM_CLASSES = 20
         cfg.TEST.PROPOSAL_FILES = cfg.TRAIN.PROPOSAL_FILES
-        annFile = "/home/lzc/WSIS-Benchmark/dataset/VOCdevkit/VOC2012/annotations/voc_2012_trainaug.json"
-        val_json = json.load(open('/home/lzc/WSIS-Benchmark/dataset/VOCdevkit/VOC2012/annotations/voc_2012_val.json'))
+        annFile = "./data/VOC2012/annotations/voc_2012_trainaug.json"
+        val_json = json.load(open('./data/VOC2012/annotations/voc_2012_val.json'))
 
     else:
         assert cfg.TEST.DATASETS, 'cfg.TEST.DATASETS shouldn\'t be empty'
@@ -325,14 +252,13 @@ if __name__ == '__main__':
     roidb = dataset.get_roidb(gt=True)
     num_images = len(roidb)
     num_classes = cfg.MODEL.NUM_CLASSES + 1
-    # final_boxes = empty_results(num_classes, num_images)
 
     coco_output = {}
     coco_output["images"] = []
     coco_output["annotations"] = []
     coco_output['categories'] = val_json['categories']
 
-    total_process = 24
+    total_process = args.total_process
     jobs = []
     for i in range(total_process):
         p = multiprocessing.Process(target=eval, args=(str(i), total_process, coco_output, roidb))
@@ -345,7 +271,6 @@ if __name__ == '__main__':
     block = {}
     for name in list_all:
         with open(os.path.join(args.output_dir, 'tmp', name), 'rb') as f:
-            # block[name.split('.')[0]] = json.load(f)
             block[name] = json.load(f)
 
             os.remove(os.path.join(args.output_dir, 'tmp', name))
