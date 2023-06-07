@@ -39,8 +39,6 @@ def get_minibatch(roidb, num_classes, flag):
     for im_i in range(num_images):
         labels, im_rois, gt_rois = _sample_rois(roidb[im_i], num_classes)
         mat_blob_this_image = roidb[im_i]['mat']
-        iou_label_blob_this_image = roidb[im_i]['iou_label']
-        peak_score_blob_this_image = roidb[im_i]['peak_score']
         img_path = roidb[im_i]['image']
 
         # Add to RoIs blob
@@ -55,11 +53,6 @@ def get_minibatch(roidb, num_classes, flag):
             hashes = np.round(rois_blob_this_image * cfg.DEDUP_BOXES).dot(v)
             _, index, inv_index = np.unique(hashes, return_index=True,
                                             return_inverse=True)
-            if cfg.iou_label:
-                iou_label_blob_this_image = iou_label_blob_this_image[index, :]
-
-            if cfg.SCORE:
-                peak_score_blob_this_image = peak_score_blob_this_image[index, :]
 
             rois_blob_this_image = rois_blob_this_image[index, :]
             mat_blob_this_image = mat_blob_this_image[index, :]

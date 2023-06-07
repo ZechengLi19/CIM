@@ -90,16 +90,6 @@ def extend_with_flipped_entries(roidb, dataset):
         #try:
         assert (boxes[:, 2] >= boxes[:, 0]).all()
 
-        True_rois = entry['True_rois'].copy()
-        oldx1 = True_rois[:, 0].copy()
-        oldx2 = True_rois[:, 2].copy()
-        True_rois[:, 0] = width - oldx2 - 1
-        True_rois[:, 2] = width - oldx1 - 1
-        #try:
-        assert (True_rois[:, 2] >= True_rois[:, 0]).all()
-
-        #except:
-        #    print(boxes)
         gt_boxes = entry['gt_boxes'].copy()
         oldx1 = gt_boxes[:, 0].copy()
         oldx2 = gt_boxes[:, 2].copy()
@@ -111,13 +101,12 @@ def extend_with_flipped_entries(roidb, dataset):
         masks = np.flip(masks,2)
             
         flipped_entry = {}
-        dont_copy = ('boxes', 'masks', 'flipped','gt_boxes','True_rois')
+        dont_copy = ('boxes', 'masks', 'flipped','gt_boxes')
         for k, v in entry.items():
             if k not in dont_copy:
                 flipped_entry[k] = v
          
         flipped_entry['boxes'] = boxes
-        flipped_entry['True_rois'] = True_rois
         flipped_entry['masks'] = masks
         flipped_entry['flipped'] = True
         flipped_entry['gt_boxes'] = gt_boxes

@@ -14,7 +14,7 @@ iou_dir: "./data/cob_iou/coco2017"
 asy_iou_dir: "./data/cob_asy_iou/coco2017"
 
 ResNet:
-  IMAGENET_PRETRAINED_WEIGHTS: ''
+  IMAGENET_PRETRAINED_WEIGHTS: 'None' # place holder
   FREEZE_AT: 2
 SOLVER:
   WEIGHT_DECAY: 0.0005

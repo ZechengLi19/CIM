@@ -2,38 +2,14 @@ import pickle
 from functools import wraps
 import importlib
 import logging
-
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from torch.autograd import Variable
-import scipy.io as io
-
 from core.config import cfg
-
 from ops import RoIPool, RoIAlign
-
 import modeling.heads as heads
-import utils.blob as blob_utils
-import utils.net as net_utils
 import utils.vgg_weights_helper as vgg_utils
-import utils.resnet_weights_helper as resnet_utils
 import utils.hrnet_weights_helper as hrnet_utils
-from utils.boxes import bbox_overlaps
-from utils.boxes import box_iou
-import numpy as np
 import os
-import scipy
-from modeling.pamr import PAMR
-from scipy.io import loadmat
-
-from utils.mask_utils import mask_iou
-
-from types import MethodType
-
-import scipy.sparse as sp
-from PIL import Image
-from torchcam.methods import GradCAM
 
 logger = logging.getLogger(__name__)
 
@@ -114,12 +90,10 @@ class Generalized_RCNN(nn.Module):
         self.mist_layer_list = []
         for ref_time in range(cfg.REFINE_TIMES):
             self.mist_layer_list.append(heads.mist_layer(portion=cfg.topk,
-                                                             full_thr=0.5 + step_rate * ref_time,
-                                                             iou_thr=0.25 + step_rate * ref_time,
-                                                             sample=cfg.easy_case_mining,
-                                                             ))
-
-        self.loss_function = heads.cls_iou_loss()
+                                                         full_thr=0.5 + step_rate * ref_time,
+                                                         iou_thr=0.25 + step_rate * ref_time,
+                                                         sample=cfg.easy_case_mining,
+                                                         ))
 
         self.diffuse_mode = [True, True, True]
 
@@ -127,15 +101,6 @@ class Generalized_RCNN(nn.Module):
         print(self.diffuse_mode)
 
         self._init_modules()
-
-    def set_start(self, start_num):
-        try:
-            self.loss_function.loss_time = start_num
-            print("loss time")
-            print(self.loss_function.loss_time)
-        except:
-            print("load start num fall")
-
 
     def _init_modules(self):
         if cfg.VGG_CLS_FEATURE:
@@ -240,7 +205,7 @@ class Generalized_RCNN(nn.Module):
 
                 return_dict['losses']['bag_loss'] += heads.mil_bag_loss(predict_cls, predict_det, labels)
                 cls_loss, _ = heads.graph_two_Loss_mean(predict_cls, mat, labels)
-                return_dict['losses']['cls_stage1_loss'] += cfg.Domain_loss_scale * cls_loss
+                return_dict['losses']['cls_stage1_loss'] += cls_loss
 
                 for k, v in return_dict['losses'].items():
                     return_dict['losses'][k] = v.unsqueeze(0)

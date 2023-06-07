@@ -5,7 +5,7 @@ dataset=voc2012trainaug
 ##############
 # Editable
 # train CIM
-python ./tools/train.py \
+CUDA_VISIBLE_DEVICES=0 python ./tools/train.py \
 --dataset ${dataset} \
 --cfg ${cfg_file}
 ############

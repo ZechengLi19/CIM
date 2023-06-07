@@ -19,9 +19,9 @@ class resnet(nn.Module):
         super(resnet, self).__init__()
         backbone = models.resnet50(pretrained=cfg.MODEL.LOAD_IMAGENET_PRETRAINED_WEIGHTS)
         if cfg.MODEL.LOAD_IMAGENET_PRETRAINED_WEIGHTS:
-            print("Load pre-trained weight for hrnet !!")
+            print("Load pre-trained weight for resnet !!")
         else:
-            print("Not Load pre-trained weight for hrnet !!")
+            print("Not Load pre-trained weight for resnet !!")
 
         self.res1 = nn.Sequential(backbone.conv1,
                                   backbone.bn1,

@@ -12,14 +12,21 @@ However, if you have any questions, please feel free to contact me (lizecheng19@
 
 ## Installation
 ### Setup with Conda
-We suggest to create a new conda environment and install all the relevant dependencies. 
+We suggest to create a new conda environment. 
 
 ```bash
 # create environment
 conda create --name CIM python=3.6
 conda activate CIM
+```
 
-# Install requirements
+Then, install the following packages:
+
+- torchvision: `pip install torch==1.10.0+cu111 torchvision==0.11.0+cu111 torchaudio==0.10.0 -f https://download.pytorch.org/whl/torch_stable.html`
+- mmcv: `pip install mmcv-full -f https://download.openmmlab.com/mmcv/dist/cu111/torch1.10.0/index.html`
+
+Finally, install other relevant dependencies.
+```bash
 pip install -r requirements.txt
 ```
 
@@ -92,6 +99,9 @@ We use `bash ./scripts/eval_CIM.sh` to evaluate CIM model.
 
 ### Mask R-CNN Refinement
 We use `bash ./scripts/generate_msrcnn_label.sh` to generate pseudo labels from CIM for training Mask R-CNN. We use Mask R-CNN implemented by mmdetection for Mask R-CNN Refinement.
+
+### Visualize
+We use `python ./visualize/vis_json_mmcv.py` to visualize our result.
 
 ## Results
 Results of instance segmentation on the VOC2012 and COCO datasets can be downloaded [here](https://drive.google.com/file/d/14TuME6jLEMdlD6HUMSLHDv09oMwE0K_3/view?usp=share_link).

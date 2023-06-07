@@ -387,14 +387,10 @@ class mist_layer(nn.Module):
 
             flag = temp_asy_iou_map * asy_iou_flag
             if flag.sum() != 0:
-                if self.test_mode and not self.get_diffuse_gt:
-                    res_idx = keep_nms_idx[torch.sum(flag, dim=0) > 0]
-
-                else:
-                    flag = flag[:, torch.sum(flag, dim=0) > 0]
-                    res_det = flag * det_prob_tmp[:, None]
-                    res_idx = torch.argmax(res_det, dim=0)
-                    res_idx = torch.unique(res_idx)
+                flag = flag[:, torch.sum(flag, dim=0) > 0]
+                res_det = flag * det_prob_tmp[:, None]
+                res_idx = torch.argmax(res_det, dim=0)
+                res_idx = torch.unique(res_idx)
 
                 is_higher_scoring_class = preds_tmp[res_idx] > gt_weights[res_idx]
                 if is_higher_scoring_class.sum() > 0:
@@ -475,38 +471,48 @@ class mist_layer(nn.Module):
         loss_weights = gt_weights[max_overlap_idx]
         pseudo_iou_label = max_overlap_v
 
-        if self.test_mode:
-            bg_inds = (max_overlap_v != 1)
-            pseudo_labels[bg_inds,:] = 0
-            pseudo_labels[bg_inds,0] = 1
-            pseudo_labels = pseudo_labels * loss_weights[:, None]
+        ignore_inds = max_overlap_v == 0
+        pseudo_labels[ignore_inds, :] = 0
+        loss_weights[ignore_inds] = 0
 
-            return pseudo_labels, pseudo_iou_label, loss_weights, None
+        bg_inds = (max_overlap_v < self.iou_th) * ~ignore_inds
+        pseudo_labels[bg_inds,:] = 0
+        pseudo_labels[bg_inds,0] = 1
 
-        else:
-            ignore_inds = max_overlap_v == 0
-            pseudo_labels[ignore_inds, :] = 0
-            loss_weights[ignore_inds] = 0
+        try:
+            big_proposal = ~asy_iou_flag
+            pseudo_labels[big_proposal, :] = 0
+            pseudo_labels[big_proposal, 0] = 1
+        except:
+            pass
 
-            bg_inds = (max_overlap_v < self.iou_th) * ~ignore_inds
-            pseudo_labels[bg_inds,:] = 0
-            pseudo_labels[bg_inds,0] = 1
+        pseudo_iou_label[pseudo_iou_label > self.full_thr] = 1
+        pseudo_iou_label[pseudo_iou_label <= self.full_thr] = 0
 
-            try:
-                big_proposal = ~asy_iou_flag
-                pseudo_labels[big_proposal, :] = 0
-                pseudo_labels[big_proposal, 0] = 1
-            except:
-                pass
+        group_assign = max_overlap_idx + 1
+        group_assign[bg_inds] = -1
+        group_assign[ignore_inds] = -2
+        group_assign = group_assign[:,None] * pseudo_labels
 
-            pseudo_iou_label[pseudo_iou_label > self.full_thr] = 1
-            pseudo_iou_label[pseudo_iou_label <= self.full_thr] = 0
+        return pseudo_labels, pseudo_iou_label, loss_weights, group_assign
 
-            group_assign = max_overlap_idx + 1
-            group_assign[bg_inds] = -1
-            group_assign[ignore_inds] = -2
-            group_assign = group_assign[:,None] * pseudo_labels
+def mil_bag_loss(predict_cls, predict_det,labels):
+    pred = predict_cls * predict_det
+    pred = torch.sum(pred,dim=0,keepdim=True)
+    pred = pred.clamp(1e-6, 1 - 1e-6)
 
-            return pseudo_labels, pseudo_iou_label, loss_weights, group_assign
+    # bg in pred
+    if pred.shape[-1]-1 == labels.shape[-1]:
+        label_tmp = labels.new_ones(labels.shape[0], labels.shape[1] + 1)
+        label_tmp[:, 1:] = labels
+
+    # bg not in pred
+    else:
+        label_tmp = labels.new_ones(labels.shape[0], labels.shape[1])
+        label_tmp[:, 0:] = labels
+
+    loss = - (label_tmp * torch.log(pred) + (1 - label_tmp) * torch.log(1 - pred)) # BCE loss
+
+    return loss.mean()
 
 
