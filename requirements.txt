@@ -4,7 +4,7 @@ backcall==0.2.0
 certifi==2022.9.24
 chainer==7.8.1
 charset-normalizer==2.0.12
-cupy @ file:///home/conda/feedstock_root/build_artifacts/cupy_1630031376637/work
+cupy==9.4.0
 cycler==0.11.0
 dataclasses==0.8
 decorator==4.4.2
@@ -27,10 +27,8 @@ kiwisolver==1.3.1
 MarkupSafe==2.0.1
 matplotlib==3.3.4
 mmcv-full==1.7.0
-# Editable install with no version control (mmdet==2.12.0)
--e /home/data2/lzc/WSIS-Benchmark/code/mmdection_edit
 networkx==2.5.1
-numpy @ file:///home/conda/feedstock_root/build_artifacts/numpy_1626681920064/work
+numpy==1.19.5
 opencv-python==4.6.0.66
 opencv-python-headless==4.6.0.66
 packaging==21.3

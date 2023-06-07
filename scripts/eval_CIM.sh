@@ -1,5 +1,5 @@
 # Editable
-cfg_file=./configs/baseline/resnet50_voc.yaml
+cfg_file=./configs/resnet50_voc.yaml
 output_file=./Outputs/resnet50_voc/Mar22-00-46-22_user-Super-Server_step
 dataset=voc2012sbdval
 iter_time=model_step44999

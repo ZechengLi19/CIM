@@ -1,5 +1,5 @@
 # Editable
-cfg_file=./configs/baseline/resnet50_voc.yaml
+cfg_file=./configs/resnet50_voc.yaml
 dataset=voc2012trainaug
 
 ##############
