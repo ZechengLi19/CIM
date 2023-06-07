@@ -108,5 +108,6 @@ Results of instance segmentation on the VOC2012 and COCO datasets can be downloa
 
 ## Acknowledgement
 Our implementation is based on these repositories:
+- (PRM) https://github.com/ZhouYanzhao/PRM
 - (PCL) https://github.com/ppengtang/pcl.pytorch
 - (mmdetection) https://github.com/open-mmlab/mmdetection
