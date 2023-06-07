@@ -53,27 +53,3 @@ class InstanceEvaluator(object):
 def coco_inst_seg_eval(gt_file, pred_file):
     evaluator = InstanceEvaluator(gt_file, pred_file)
     return evaluator.evaluate()
-
-if __name__ == '__main__':
-    label_file =  '/mnt/jaring/cocoapi/cocoapi-master/MatlabAPI/results/*.json'
-    result_file = '/mnt/yu/ynet/result/wsis/sbd/*.json'
-    ########## 1. prm eval
-    mAP, cls_ap = coco_inst_seg_eval( label_file, result_file)
-    print('Performance(COCOAPI): ')
-    for k, v in mAP.items():
-        print('mAP@%s: %.1f' % (k, 100 * v))
-    # print(cls_ap['0.50'])
-    
-    ########## 2. coco eval
-    annType = ['segm','bbox','keypoints']
-    annType = annType[0] 
-    cocoGt=COCO(label_file)
-    cocoDt=cocoGt.loadRes(result_file)
-    cocoEval = COCOeval(cocoGt,cocoDt,annType)
-    # imgIds=imgIds[0:100]
-    # imgId = imgIds[np.random.randint(100)]
-    # cocoEval.params.imgIds  = imgIds
-    cocoEval.evaluate()
-    cocoEval.accumulate()
-    cocoEval.summarize()
-    

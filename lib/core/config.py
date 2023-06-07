@@ -553,7 +553,6 @@ __C.asy_iou_dir = ''
 __C.TEST.PROPOSAL_FILTER = True
 __C.TEST.BG_THRESHOLD = 0.1
 
-# lzc edit for wsl
 __C.MODEL.RESNETS = AttrDict()
 
 __C.MODEL.RESNETS.DEPTH = 50

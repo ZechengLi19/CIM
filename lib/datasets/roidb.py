@@ -30,16 +30,6 @@ from .json_dataset import JsonDataset
 
 logger = logging.getLogger(__name__)
 
-'''
-from lib.datasets.json_dataset import JsonDataset
-dataset_names = cfg.TRAIN.DATASETS
-proposal_files = cfg.TRAIN.PROPOSAL_FILES
-mat_files = cfg.TRAIN.REFINE_FILES
-dataset_name = dataset_names[0]
-proposal_file = proposal_files[0]
-name = dataset_name
-'''
-
 def combined_roidb_for_training(dataset_names, proposal_files, mat_files):
     """Load and concatenate roidbs for one or more datasets, along with optional
     object proposals. The roidb entries are then prepared for use in training,

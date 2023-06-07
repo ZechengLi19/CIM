@@ -585,30 +585,6 @@ class HighResolutionNet(nn.Module):
 
         return y
 
-    # def init_weights(self, pretrained="/home/data2/lzc/WSIS-Benchmark/pths/WSRCNN/hrnetv2_w48_imagenet_pretrained.pth", ):
-    #     # self.load_state_dict(torch.load(pth, map_location="cpu"))
-    #     # print("Loading pretrain weight")
-    #     # logger.info('=> init weights from normal distribution')
-    #     for m in self.modules():
-    #         if isinstance(m, nn.Conv2d):
-    #             nn.init.kaiming_normal_(
-    #                 m.weight, mode='fan_out', nonlinearity='relu')
-    #         elif isinstance(m, nn.BatchNorm2d):
-    #             nn.init.constant_(m.weight, 1)
-    #             nn.init.constant_(m.bias, 0)
-    #     if os.path.isfile(pretrained):
-    #         pretrained_dict = torch.load(pretrained)
-    #         # logger.info('=> loading pretrained model {}'.format(pretrained))
-    #         model_dict = self.state_dict()
-    #         pretrained_dict = {k: v for k, v in pretrained_dict.items()
-    #                            if k in model_dict.keys()}
-    #         # for k, _ in pretrained_dict.items():
-    #         #     logger.info(
-    #         #         '=> loading {} pretrained model {}'.format(k, pretrained))
-    #         model_dict.update(pretrained_dict)
-    #         self.load_state_dict(model_dict)
-
-
 class roi_2mlp_head_refine_model_mask_fuse(nn.Module):
     def __init__(self, dim_in, roi_xform_func, spatial_scale):
         super().__init__()

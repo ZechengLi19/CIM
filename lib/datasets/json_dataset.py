@@ -48,55 +48,6 @@ from .dataset_catalog import DATASETS
 from .dataset_catalog import IM_DIR
 from .dataset_catalog import IM_PREFIX
 
-'''
-from lib.datasets.dataset_catalog import ANN_FN
-from lib.datasets.dataset_catalog import DATASETS
-from lib.datasets.dataset_catalog import IM_DIR
-from lib.datasets.dataset_catalog import IM_PREFIX
-
-category_ids = COCO.getCatIds()
-categories = [c['name'] for c in COCO.loadCats(category_ids)]
-category_to_id_map = dict(zip(categories, category_ids))
-classes = categories
-num_classes = len(classes)
-json_category_id_to_contiguous_id = {v: i for i, v in enumerate(COCO.getCatIds())}
-contiguous_category_id_to_json_id = { v: k for k, v in json_category_id_to_contiguous_id.items()}
-classes = categories
-num_classes = len(classes)
-
-
-def _prep_roidb_entry(entry):
-    """Adds empty metadata fields to an roidb entry."""
-    # Reference back to the parent dataset
-    entry['dataset'] = 'json_data'
-    # Make file_name an abs path
-    im_path = os.path.join(image_directory, image_prefix + entry['file_name'])
-    assert os.path.exists(im_path), 'Image \'{}\' not found'.format(im_path)
-    entry['image'] = im_path
-    entry['flipped'] = False
-    # Empty placeholders
-    entry['boxes'] = np.empty((0, 4), dtype=np.float32)  
-    entry['masks'] = np.empty((0, 7, 7), dtype=np.float32)
-    entry['mat'] = np.empty((0, 20), dtype=np.float32)  
-    entry['gt_boxes'] = np.empty((0, 5), dtype=np.float32)
-    entry['gt_classes'] = np.zeros((1, num_classes), dtype=np.int32)
-    # Remove unwanted fields that come from the json file (if they exist)
-    for k in ['date_captured', 'url', 'license', 'file_name']:
-        if k in entry:
-            del entry[k]
-
-image_ids = COCO.getImgIds()   # 10582
-image_ids.sort()
-roidb = copy.deepcopy(COCO.loadImgs(image_ids))
-
-for entry in roidb:
-    _prep_roidb_entry(entry)
-
-
-'''
-
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -136,7 +87,7 @@ class JsonDataset(object):
 
     @property
     def cache_path(self):
-        cache_path = os.path.abspath(os.path.join(cfg.DATA_DIR, 'cache/lzc_path'))
+        cache_path = os.path.abspath(os.path.join(cfg.DATA_DIR, 'cache'))
         if not os.path.exists(cache_path):
             os.makedirs(cache_path)
         return cache_path
@@ -198,17 +149,7 @@ class JsonDataset(object):
                         pickle.dump(roidb, fp, pickle.HIGHEST_PROTOCOL)
                     logger.info('Cache ground truth roidb to %s', cache_filepath)
 
-            ################
-            #
-            # self.debug_timer.tic()
-            # for entry in roidb:
-            #     self._add_gt_annotations(entry)
-            # logger.debug(
-            #     '_add_gt_annotations took {:.3f}s'.
-            #     format(self.debug_timer.toc(average=False))
-            # )
-
-        if mat_file is not None:    
+        if mat_file is not None:
             self._add_prmmat_from_file(roidb, mat_file)   
         if proposal_file is not None:
             # Include proposals from a file
@@ -299,15 +240,6 @@ class JsonDataset(object):
             if i % 2500 == 0:
                 logger.info(' {:d}/{:d}'.format(i + 1, len(roidb)))
             boxes = proposals['boxes'][i]
-
-            #####################
-            #coco
-            #oldx1 = boxes[:, 1].copy()
-            #oldx2 = boxes[:, 2].copy()
-            #boxes[:, 1] = oldx2
-            #boxes[:, 2] = oldx1
-            
-            ####################
             
             # Sanity check that these boxes are for the correct image id
             # assert entry['id'] == proposals[id_field][i]

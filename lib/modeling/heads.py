@@ -1,38 +1,9 @@
-import copy
-import logging
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.nn.init as init
-from torch.autograd import Variable
-
-from core.config import cfg
-import nn as mynn
-import utils.net as net_utils
 import numpy as np
 from torchvision.ops import box_iou,nms
-from torch_geometric.nn import GCNConv, GATConv, APPNP
-from torch_geometric.nn import Sequential as GNN_Sequential
-from utils.mask_utils import mask_iou
-from modeling.mmcv_box.visualization.image import imshow_det_bboxes
-from modeling.pamr import PAMR
-import torchvision
-
-import cv2
-from PIL import Image
-import os
-from scipy.io import loadmat
 import json
-from matplotlib import pyplot as plt
-import pydensecrf.densecrf as dcrf
-from pydensecrf.utils import unary_from_labels
-import time
-from scipy.ndimage import zoom
-
-l1loss = nn.L1Loss()
-mseloss = nn.MSELoss()
-agg_loss = nn.BCELoss()
 
 def id_2_clsname(annotation_file_path):
     with open(annotation_file_path,"r") as f:
@@ -89,17 +60,12 @@ def loss_weight_bag_loss(predict,pseudo_labels,label_tmp,loss_weight):
     tmp_pseudo_label = (pseudo_labels != 0).float()
     assert tmp_pseudo_label.max() == 1
 
-    # label == 1 的max
     ind_agg_value, ind_agg_index = torch.max(ind[:,None] * predict * tmp_pseudo_label,dim=0)
-    # label == 0，1 的max
     agg_value, agg_index = torch.max(predict,dim=0)
 
-    # 将 label == 1 的max强制收到 aggression 中
-    # 使用 label == 0，1 的 max 填充 label == 0 的部分
     aggression = (ind_agg_value * label_tmp) + (agg_value * (1 - label_tmp))
     aggression = aggression.clamp(1e-6, 1 - 1e-6)
 
-    # 将 loss_weight 取出来
     label_flag = label_tmp == 1
     aggression_index = torch.zeros_like(agg_index)
     aggression_index[label_flag] = ind_agg_index[label_flag]
@@ -375,7 +341,6 @@ class mist_layer(nn.Module):
         gt_labels = torch.zeros((predict_cls.shape[0], label.shape[-1] + 1), dtype=predict_cls.dtype, device=predict_cls.device)
         gt_weights = -torch.ones((predict_cls.shape[0],), dtype=predict_cls.dtype, device=predict_cls.device)
 
-        # 将面积过大的 proposal 删除，比如说proposal占一整张图片的情况
         asy_iou_flag = torch.sum(asy_iou_map > self.asy_iou_th, dim=-1, keepdim=True) < 0.9 * asy_iou_map.shape[-1]
 
         for c in klasses:
@@ -423,12 +388,12 @@ class mist_layer(nn.Module):
             flag = temp_asy_iou_map * asy_iou_flag
             if flag.sum() != 0:
                 if self.test_mode and not self.get_diffuse_gt:
-                    res_idx = keep_nms_idx[torch.sum(flag, dim=0) > 0]  # 原先的 res_idx --> 未diffuse
+                    res_idx = keep_nms_idx[torch.sum(flag, dim=0) > 0]
 
                 else:
                     flag = flag[:, torch.sum(flag, dim=0) > 0]
                     res_det = flag * det_prob_tmp[:, None]
-                    res_idx = torch.argmax(res_det, dim=0)  # 真正的 gt
+                    res_idx = torch.argmax(res_det, dim=0)
                     res_idx = torch.unique(res_idx)
 
                 is_higher_scoring_class = preds_tmp[res_idx] > gt_weights[res_idx]
@@ -439,7 +404,6 @@ class mist_layer(nn.Module):
                     gt_weights[keep_idxs] = preds_tmp[keep_idxs]
 
         gt_idxs = torch.sum(gt_labels, dim=-1) > 0
-        # assert gt_idxs.sum() > 0
 
         gt_boxes, gt_labels, gt_weights = rois[gt_idxs], gt_labels[gt_idxs], gt_weights[gt_idxs]
 
@@ -449,7 +413,7 @@ class mist_layer(nn.Module):
     def forward(self, predict_cls, predict_det, rois, labels, iou_map=None, asy_iou_map=None, diffuse = False):
         if rois.ndim == 3:
             rois = rois.squeeze(0)
-        rois = rois[:,1:] # remove batch_id
+        rois = rois[:,1:]
 
         if diffuse:
             gt_boxes, gt_labels, gt_weights, gt_idxs, asy_iou_flag = self.mist_label_diffuse(predict_cls, predict_det, rois, labels, iou_map, asy_iou_map)
@@ -465,7 +429,7 @@ class mist_layer(nn.Module):
             return None, None, None, None
 
         if iou_map == None:
-            overlaps = box_iou(rois, gt_boxes) # (proposal_num,gt_num)
+            overlaps = box_iou(rois, gt_boxes)
         else:
             overlaps = iou_map[:, gt_idxs]
 
@@ -529,27 +493,18 @@ class mist_layer(nn.Module):
             pseudo_labels[bg_inds,0] = 1
 
             try:
-                # 将太大的proposal标记为bg
                 big_proposal = ~asy_iou_flag
                 pseudo_labels[big_proposal, :] = 0
                 pseudo_labels[big_proposal, 0] = 1
             except:
                 pass
 
-            # 将 pseudo_iou_label 设置为离散值
             pseudo_iou_label[pseudo_iou_label > self.full_thr] = 1
             pseudo_iou_label[pseudo_iou_label <= self.full_thr] = 0
 
-            # # 将 pseudo_iou_label 设置为连续值
-            # pseudo_iou_label = (pseudo_iou_label - self.iou_th) / (1 - self.iou_th)
-
-            group_assign = max_overlap_idx + 1 # 将 index 从 1 开始
+            group_assign = max_overlap_idx + 1
             group_assign[bg_inds] = -1
             group_assign[ignore_inds] = -2
-            # 所以最后的范围是 [-2, -1, , 1, 2, 3...]
-
-            # transform pseudo_labels --> N * 21
-            # 将 group_assign 变为 和 初始伪标签 mat 相同的形态
             group_assign = group_assign[:,None] * pseudo_labels
 
             return pseudo_labels, pseudo_iou_label, loss_weights, group_assign

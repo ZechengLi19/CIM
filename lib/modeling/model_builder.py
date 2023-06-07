@@ -143,7 +143,7 @@ class Generalized_RCNN(nn.Module):
                 vgg_utils.load_pretrained_imagenet_weights(self)
         # resnet using pre-trained weight from torch
         # if not cfg.ResNet_CLS_FEATURE:
-        #     if cfg.MODEL.LOAD_IMAGENET_PRETRAINED_WEIGHTS:  # True
+        #     if cfg.MODEL.LOAD_IMAGENET_PRETRAINED_WEIGHTS:
         #         resnet_utils.load_pretrained_imagenet_weights(self)
         if cfg.HRNET_CLS_FEATURE:
             if cfg.MODEL.LOAD_IMAGENET_PRETRAINED_WEIGHTS:
@@ -165,7 +165,7 @@ class Generalized_RCNN(nn.Module):
 
             return_dict = {}  # A dict to collect return variables
 
-            blob_conv = self.Conv_Body(im_data)  # [1, 512, 57, 86]
+            blob_conv = self.Conv_Body(im_data)
 
             # if not self.training:
             return_dict['blob_conv'] = blob_conv
@@ -232,7 +232,7 @@ class Generalized_RCNN(nn.Module):
                     pseudo_iou_label = pseudo_iou_label.detach()
                     loss_weights = lmda * loss_weights.detach()
 
-                    ind_cls_loss, ind_iou_loss, f_ind_cls_loss, f_ind_iou_loss, bag_loss = pcl_heads.cal_cls_iou_loss_function_full(cls_score, iou_score, pseudo_labels, pseudo_iou_label,loss_weights, labels)
+                    ind_cls_loss, ind_iou_loss, f_ind_cls_loss, f_ind_iou_loss, bag_loss = heads.cal_cls_iou_loss_function_full(cls_score, iou_score, pseudo_labels, pseudo_iou_label,loss_weights, labels)
 
                     return_dict['losses']['ind_cls_loss'] += ind_cls_loss.clone()
                     return_dict['losses']['ind_iou_loss'] += 3 * ind_iou_loss.clone()
@@ -263,19 +263,9 @@ class Generalized_RCNN(nn.Module):
         assert method in {'RoIPoolF', 'RoICrop', 'RoIAlign'}, \
             'Unknown pooling method: {}'.format(method)
 
-        # print(blobs_in)
-        # print(rois)
-
-        # Single feature level
-        # rois: holds R regions of interest, each is a 5-tuple
-        # (batch_idx, x1, y1, x2, y2) specifying an image batch index and a
-        # rectangle (x1, y1, x2, y2)
         if method == 'RoIPoolF':
-            # xform_out = RoIPoolFunction(resolution, resolution, spatial_scale)(blobs_in, rois)  # (7,7,1/8) (x, rois)
-            xform_out = RoIPool(resolution, spatial_scale)(blobs_in, rois)  # (7,7,1/8) (x, rois)
+            xform_out = RoIPool(resolution, spatial_scale)(blobs_in, rois)
         elif method == 'RoIAlign':
-            # xform_out = RoIAlignFunction(
-            #     resolution, resolution, spatial_scale, sampling_ratio)(blobs_in, rois)
             xform_out = RoIAlign(
                 resolution, spatial_scale, sampling_ratio)(blobs_in.contiguous(), rois.contiguous())
 

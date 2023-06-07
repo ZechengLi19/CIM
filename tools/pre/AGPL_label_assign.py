@@ -20,7 +20,7 @@ from pre_tools import *
 trash="./data/trash"
 useless_file = "assignment_label_rm_{}.pkl"
 
-def generate_assugn_coco2017(imgIds, lzc_idx, model, device, dataset, cocoGt):
+def assign_coco2017(imgIds, worker_id, model, device, dataset, cocoGt):
     img_dir = "./data/coco2017/train2017"
     cob_original_file = "./data/coco2017/COB-COCO"
     model = model.inference().to(device)
@@ -99,11 +99,11 @@ def generate_assugn_coco2017(imgIds, lzc_idx, model, device, dataset, cocoGt):
             sbd_proposals['mat'].append(label_assignment)
 
     pickle.dump(sbd_proposals, open(
-        os.path.join(trash, useless_file.format(lzc_idx)), 'wb'),
+        os.path.join(trash, useless_file.format(worker_id)), 'wb'),
                 pickle.HIGHEST_PROTOCOL)
 
 
-def generate_assign_voc2012(imgIds, lzc_idx, model, device, dataset, cocoGt):
+def assign_voc2012(imgIds, worker_id, model, device, dataset, cocoGt):
     img_dir = "./data/VOC2012/JPEGImages"
     cob_original_file = "./dataset/VOC2012/COB_SBD_trainaug"
     model = model.inference().to(device)
@@ -185,7 +185,7 @@ def generate_assign_voc2012(imgIds, lzc_idx, model, device, dataset, cocoGt):
 
 
     pickle.dump(sbd_proposals, open(
-        os.path.join(trash, useless_file.format(lzc_idx)), 'wb'),
+        os.path.join(trash, useless_file.format(worker_id)), 'wb'),
                 pickle.HIGHEST_PROTOCOL)
 
 if __name__ == '__main__':
@@ -221,7 +221,7 @@ if __name__ == '__main__':
     n_gpus = torch.cuda.device_count()
 
     if dataset == "voc":
-        generate_assign_function = generate_assign_voc2012
+        assign_fun = assign_voc2012
         backbone = fc_resnet50(num_classes=20)
         model = peak_response_mapping(backbone=backbone, sub_pixel_locating_factor=8)
 
@@ -232,7 +232,7 @@ if __name__ == '__main__':
             pass
         model.load_state_dict(pretrained)
     else:
-        generate_assign_function = generate_assugn_coco2017
+        assign_fun = assign_coco2017
         backbone = fc_resnet50(num_classes=80)
         model = peak_response_mapping(backbone=backbone, sub_pixel_locating_factor=8)
         pretrained = torch.load(prm_model_path, map_location=torch.device('cpu'))
@@ -241,12 +241,12 @@ if __name__ == '__main__':
     jobs = []
     for worker_id in range(worker):
         if worker_id + 1 != worker:
-            p = multiprocessing.Process(target=generate_assign_function,
+            p = multiprocessing.Process(target=assign_fun,
                                         args=(imgIds[worker_id * per_len:(worker_id + 1) * per_len], worker_id,
                                               copy.deepcopy(model), "cuda:{}".format(int(worker_id % n_gpus)),
                                               dataset, cocoGt))
         else:
-            p = multiprocessing.Process(target=generate_assign_function,
+            p = multiprocessing.Process(target=assign_fun,
                                         args=(imgIds[worker_id * per_len:], worker_id, copy.deepcopy(model),
                                               "cuda:{}".format(int(worker_id % n_gpus)),
                                               dataset, cocoGt))

@@ -17,7 +17,7 @@ class FT_VGG(nn.Module):
     def __init__(self, model, num_classes):
         super(FT_VGG, self).__init__()
         self.features = model.features
-        self.classifier = nn.Sequential(nn.Conv2d(512, num_classes, kernel_size=1, bias=True))   # 全卷积？
+        self.classifier = nn.Sequential(nn.Conv2d(512, num_classes, kernel_size=1, bias=True))
 
     def forward(self, x):
         x = self.features(x)
@@ -27,13 +27,13 @@ class FT_VGG(nn.Module):
 def fc_vgg16( num_classes: int = 20, pretrained: bool = True):
     """FC ft_vgg16.
     """
-    model = FT_VGG(torchvision.models.vgg16(pretrained), num_classes)   # 使用torchvision内置的vgg16，同时修改fc层参数
+    model = FT_VGG(torchvision.models.vgg16(pretrained), num_classes)
     return model  
 
 class dilated_conv5_body(nn.Module):
     def __init__(self):
         super().__init__()
-        self.conv1 = nn.Sequential(nn.Conv2d(3, 64, kernel_size=3, stride=1,    # 直接从3通道变成64通道
+        self.conv1 = nn.Sequential(nn.Conv2d(3, 64, kernel_size=3, stride=1,
                                          padding=1, bias=True),
                                nn.ReLU(inplace=True),
                                nn.Conv2d(64, 64, kernel_size=3, stride=1,
@@ -74,24 +74,19 @@ class dilated_conv5_body(nn.Module):
                                nn.ReLU(inplace=True),
                                nn.Conv2d(512, 512, kernel_size=3, stride=1,
                                          padding=2, dilation=2, bias=True),
-                               nn.ReLU(inplace=True))       # 最后conv5使用dilation卷积！
+                               nn.ReLU(inplace=True))
 
-        self.dim_out = 512  # 卷积输出的通道数
-        self.spatial_scale = 1. / 8.    # 将proposal映射到feature map上的尺度因子，便于后续送入RoIPooling
+        self.dim_out = 512
+        self.spatial_scale = 1. / 8.
 
         self._init_modules()
 
     def _init_modules(self):
         assert cfg.VGG.FREEZE_AT in [0, 2, 3, 4, 5]     # 默认不能只冻结conv1的参数 # TODO：why？
         for i in range(1, cfg.VGG.FREEZE_AT + 1):
-            freeze_params(getattr(self, 'conv%d' % i))  # getattr(a, 'bar')获得对象a的bar属性
-                                                        # 将冻结层的 requires_grad = False
+            freeze_params(getattr(self, 'conv%d' % i))
 
-    # TODO：什么作用？
     def detectron_weight_mapping(self):
-        #if cfg.VGG_CLS_FEATURE:
-        #    mapping_to_detectron = {}
-        #else:
         mapping_to_detectron = {
             'conv1.0.weight': 'conv1_0_w',
             'conv1.0.bias': 'conv1_0_b',
@@ -124,17 +119,15 @@ class dilated_conv5_body(nn.Module):
 
         return mapping_to_detectron, orphan_in_detectron
 
-    # TODO：这里的train是什么意思？ 而且还是递归调用？
     def train(self, mode=True):
-        # Override
         self.training = mode
 
-        for i in range(cfg.VGG.FREEZE_AT + 1, 6):  # 2+1 , 6
+        for i in range(cfg.VGG.FREEZE_AT + 1, 6):
             getattr(self, 'conv%d' % i).train(mode)
 
     def forward(self, x):
         for i in range(1, 6):
-            x = getattr(self, 'conv%d' % i)(x)  # x = conv1(x) ...
+            x = getattr(self, 'conv%d' % i)(x)
         return x
 
 
