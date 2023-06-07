@@ -90,7 +90,7 @@ We use `bash ./scripts/train_CIM.sh` to train CIM model.
 ### Evaluation
 We use `bash ./scripts/eval_CIM.sh` to evaluate CIM model.
 
-## Mask R-CNN Refinement
+### Mask R-CNN Refinement
 We use `bash ./scripts/generate_msrcnn_label.sh` to generate pseudo labels from CIM for training Mask R-CNN. We use Mask R-CNN implemented by mmdetection for Mask R-CNN Refinement.
 
 ## Results
