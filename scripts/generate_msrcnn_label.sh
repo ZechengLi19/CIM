@@ -11,7 +11,7 @@ result_pkl=${output_file}/trainaug/${iter_time}/discovery.pkl
 output_dir=${output_file}/trainaug/${iter_time}
 
 # generate discovery.pkl on training set
-python ./tools/test_net.py \
+CUDA_VISIBLE_DEVICES=0,1 python ./tools/test_net.py \
 --cfg ${cfg_file} \
 --load_ckpt ${ckpt} \
 --dataset ${dataset}
@@ -23,7 +23,7 @@ python ./tools/generate_mask_for_MaskRCNN.py \
 --dataset ${dataset}
 
 # filter out low confidence pseudo labels
-python ./tools/change_pesudo_label_thr.py \
+python ./tools/change_mask_thr.py \
 --output_dir ${output_dir} \
 --thr 0.3
 #############

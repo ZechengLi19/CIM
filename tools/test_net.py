@@ -23,7 +23,7 @@ cv2.ocl.setUseOpenCL(False)
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--dataset', required=True,
+        '--dataset', default="",
         help='training dataset')
     parser.add_argument(
         '--cfg', dest='cfg_file', required=True,

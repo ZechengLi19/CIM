@@ -38,8 +38,7 @@ from core.test import im_detect_all
 from core.test import box_results_for_corloc, box_results_with_nms_and_limit
 from datasets import task_evaluation
 from datasets.json_dataset import JsonDataset
-# from modeling import model_builder
-from modeling import my_model_builder as model_builder
+from modeling import model_builder
 import nn as mynn
 from utils.detectron_weight_helper import load_detectron_weight
 import utils.env as envu
@@ -189,10 +188,6 @@ def test_net_on_dataset(
     for i, entry in enumerate(roidb):
         boxes = all_boxes[entry['image']]
 
-        # print(entry.keys())
-        # print(boxes)
-        # print(entry["True_rois"])
-        # print(entry["boxes"])
         if test_corloc:
             _, _, cls_boxes_i = box_results_for_corloc(boxes['scores'], boxes['boxes'])
 
@@ -294,9 +289,6 @@ def test_net(
         path = entry['image']
         labels = entry['gt_classes']
         cls_boxes_i = im_detect_all(model, im, box_proposals, masks, mat, timers, path=path, flag = flag,labels = labels)
-
-        assert cls_boxes_i['boxes'].shape == np.array(entry["True_rois"], dtype=np.float).shape
-        cls_boxes_i['boxes'] = np.array(entry["True_rois"], dtype=np.float)
 
         all_boxes[entry['image']] = cls_boxes_i
 

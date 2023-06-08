@@ -61,7 +61,7 @@ def parse_args():
         default='./discovery.pkl',
         help='the path for result file.')
     parser.add_argument(
-        '--output_dir', required=True,
+        '--output_dir',
         help='output directory to save the testing results.')
     parser.add_argument(
         '--is_best', default=False,

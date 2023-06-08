@@ -10,7 +10,7 @@ ckpt=${output_file}/ckpt/${iter_time}.pth
 result_pkl=${output_file}/test/${iter_time}/detections.pkl
 
 # generate detections.pkl on test set
-python -u tools/test_net.py \
+CUDA_VISIBLE_DEVICES=0,1 python -u tools/test_net.py \
 --cfg ${cfg_file} \
 --load_ckpt ${ckpt} \
 --dataset ${dataset} \

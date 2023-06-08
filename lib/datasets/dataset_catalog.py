@@ -43,12 +43,16 @@ DATASETS = {
             _DATA_DIR + '/VOC2012/JPEGImages',
         ANN_FN:
             _DATA_DIR + '/VOC2012/annotations/voc_2012_trainaug.json',
+        DEVKIT_DIR:
+            _DATA_DIR,
     },
     'voc_2012_sbdval': {
         IM_DIR:
             _DATA_DIR + '/VOC2012/JPEGImages',
         ANN_FN:
             _DATA_DIR + '/VOC2012/annotations/voc_2012_val.json',
+        DEVKIT_DIR:
+            _DATA_DIR,
     },
     'coco_2017_train': {
         IM_DIR:
