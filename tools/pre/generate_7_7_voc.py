@@ -7,22 +7,9 @@ from PIL import Image
 from pycocotools.coco import COCO
 import multiprocessing
 from tqdm import tqdm
+from pre_tools import *
 
 trash="./data/trash"
-
-def imresize(arr,size,interp='bilibear',mode=None):
-    im = Image.fromarray(np.uint8(arr),mode=mode)
-    ts = type(size)
-    if np.issubdtype(ts,np.signedinteger):
-        percent = size / 100.0
-        size = tuple((np.array(im.size)*percent).astype(int))
-    elif np.issubdtype(type(size),np.floating):
-        size = tuple((np.array(im.size)*size).astype(int))
-    else:
-        size = (size[1],size[0])
-    func = {'nearest':0,'lanczos':1,'biliear':2,'bicubic':3,'cubic':3}
-    imnew = im.resize(size,resample=func[interp])    # 调用PIL库中的resize函数
-    return np.array(imnew)
 
 def generate_pkl_voc2012(imgIds, worker_id):
     train_proposals_dir = "./data/VOC2012/COB_SBD_trainaug"
