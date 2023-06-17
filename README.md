@@ -101,7 +101,7 @@ We use `bash ./scripts/eval_CIM.sh` to evaluate CIM model.
 We use `bash ./scripts/generate_msrcnn_label.sh` to generate pseudo labels from CIM for training Mask R-CNN. We use Mask R-CNN implemented by mmdetection for Mask R-CNN Refinement.
 
 ### Visualize
-We use `python ./visualize/vis_json_mmcv.py` to visualize our result.
+We use `bash ./scripts/visual_result_mmcv.sh` to visualize our result.
 
 ## Results
 Results of instance segmentation on the VOC2012 and COCO datasets can be downloaded [here](https://drive.google.com/file/d/14TuME6jLEMdlD6HUMSLHDv09oMwE0K_3/view?usp=share_link).
