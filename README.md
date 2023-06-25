@@ -1,14 +1,7 @@
 # Complete Instances Mining for Weakly Supervised Instance Segmentation
 
-## Framework
-
+This project hosts the code for implementing the CIM algorithm for weakly supervised instance segmentation.
 ![CIM](docs/pipeline.png) 
-
-## Code
-- The code is being cleaned up.
-
-I'm currently working on a graduation project and may be slower to update.
-However, if you have any questions, please feel free to contact me (lizecheng19@gmail.com). 
 
 ## Installation
 ### Setup with Conda
@@ -99,11 +92,14 @@ We use `bash ./scripts/eval_CIM.sh` to evaluate CIM model.
 ### Mask R-CNN Refinement
 We use `bash ./scripts/generate_msrcnn_label.sh` to generate pseudo labels from CIM for training Mask R-CNN. We use Mask R-CNN implemented by mmdetection for Mask R-CNN Refinement.
 
-### Visualize
+### Visualization
 We use `bash ./scripts/visual_result_mmcv.sh` to visualize our result.
 
 ## Results
 Results of instance segmentation on the VOC2012 and COCO datasets can be downloaded [here](https://1drv.ms/f/s!Ah9g93YHHTrAaje14InpZd_XDEw?e=xhEhxT).
+
+## Contact
+If you have any questions, please feel free to contact Zecheng Li (lizecheng19@gmail.com). Thank you.
 
 ## Acknowledgement
 Our implementation is based on these repositories:
