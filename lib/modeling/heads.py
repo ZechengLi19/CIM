@@ -151,6 +151,25 @@ def mil_losses(cls_score, labels,loss_weight=None):
 
     return loss.mean()
 
+def mil_bag_loss(predict_cls, predict_det,labels):
+    pred = predict_cls * predict_det
+    pred = torch.sum(pred,dim=0,keepdim=True)
+    pred = pred.clamp(1e-6, 1 - 1e-6)
+
+    # bg in pred
+    if pred.shape[-1]-1 == labels.shape[-1]:
+        label_tmp = labels.new_ones(labels.shape[0], labels.shape[1] + 1)
+        label_tmp[:, 1:] = labels
+
+    # bg not in pred
+    else:
+        label_tmp = labels.new_ones(labels.shape[0], labels.shape[1])
+        label_tmp[:, 0:] = labels
+
+    loss = - (label_tmp * torch.log(pred) + (1 - label_tmp) * torch.log(1 - pred)) # BCE loss
+
+    return loss.mean()
+
 class cls_iou_model(nn.Module):
     def __init__(self, dim_in, dim_out,ref_num,class_agnostic=False):
         super(cls_iou_model, self).__init__()
@@ -201,16 +220,16 @@ class cls_iou_model(nn.Module):
         return predict_cls, predict_det, ref_cls_score, ref_iou_score
 
 
-class mist_layer(nn.Module):
+class CIM_layer(nn.Module):
     def __init__(self, portion=0.1, full_thr=0.5, iou_thr=0.25, asy_iou_th=0.85,sample=False):
-        super(mist_layer, self).__init__()
+        super(CIM_layer, self).__init__()
         self.portion = portion
         self.full_thr = full_thr
         self.iou_th = iou_thr
         self.asy_iou_th = asy_iou_th
         self.sample = sample
 
-        print("mist_layer--> portion:{}, full_thr: {}, iou_thr: {}".format(portion,full_thr,iou_thr))
+        print("CIM_layer--> portion:{}, full_thr: {}, iou_thr: {}".format(portion,full_thr,iou_thr))
         print("sample:{}".format(sample))
 
     # instance_list -> [{},{}...]
@@ -322,7 +341,7 @@ class mist_layer(nn.Module):
         return gt_boxes, gt_labels, gt_weights, gt_idxs
 
     @torch.no_grad()
-    def mist_label_diffuse(self, predict_cls, predict_det, rois, label, iou_map=None, asy_iou_map=None):
+    def CIM_label(self, predict_cls, predict_det, rois, label, iou_map=None, asy_iou_map=None):
         if label.dim() != 1:
             label = label.squeeze()
 
@@ -340,7 +359,7 @@ class mist_layer(nn.Module):
         # one hot label
         gt_labels = torch.zeros((predict_cls.shape[0], label.shape[-1] + 1), dtype=predict_cls.dtype, device=predict_cls.device)
         gt_weights = -torch.ones((predict_cls.shape[0],), dtype=predict_cls.dtype, device=predict_cls.device)
-
+        # filter out big proposals
         asy_iou_flag = torch.sum(asy_iou_map > self.asy_iou_th, dim=-1, keepdim=True) < 0.9 * asy_iou_map.shape[-1]
 
         for c in klasses:
@@ -412,7 +431,7 @@ class mist_layer(nn.Module):
         rois = rois[:,1:]
 
         if diffuse:
-            gt_boxes, gt_labels, gt_weights, gt_idxs, asy_iou_flag = self.mist_label_diffuse(predict_cls, predict_det, rois, labels, iou_map, asy_iou_map)
+            gt_boxes, gt_labels, gt_weights, gt_idxs, asy_iou_flag = self.CIM_label(predict_cls, predict_det, rois, labels, iou_map, asy_iou_map)
         else:
             if predict_det!= None:
                 preds = predict_cls * predict_det
@@ -496,23 +515,5 @@ class mist_layer(nn.Module):
 
         return pseudo_labels, pseudo_iou_label, loss_weights, group_assign
 
-def mil_bag_loss(predict_cls, predict_det,labels):
-    pred = predict_cls * predict_det
-    pred = torch.sum(pred,dim=0,keepdim=True)
-    pred = pred.clamp(1e-6, 1 - 1e-6)
-
-    # bg in pred
-    if pred.shape[-1]-1 == labels.shape[-1]:
-        label_tmp = labels.new_ones(labels.shape[0], labels.shape[1] + 1)
-        label_tmp[:, 1:] = labels
-
-    # bg not in pred
-    else:
-        label_tmp = labels.new_ones(labels.shape[0], labels.shape[1])
-        label_tmp[:, 0:] = labels
-
-    loss = - (label_tmp * torch.log(pred) + (1 - label_tmp) * torch.log(1 - pred)) # BCE loss
-
-    return loss.mean()
 
 

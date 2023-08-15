@@ -87,9 +87,9 @@ class Generalized_RCNN(nn.Module):
 
         self.cls_iou_model = heads.cls_iou_model(self.Box_Head.dim_out, cls_num, cfg.REFINE_TIMES,
                                                      class_agnostic=False)
-        self.mist_layer_list = []
+        self.CIM_layer_list = []
         for ref_time in range(cfg.REFINE_TIMES):
-            self.mist_layer_list.append(heads.mist_layer(portion=cfg.topk,
+            self.CIM_layer_list.append(heads.CIM_layer(portion=cfg.topk,
                                                          full_thr=0.5 + step_rate * ref_time,
                                                          iou_thr=0.25 + step_rate * ref_time,
                                                          sample=cfg.easy_case_mining,
@@ -171,20 +171,20 @@ class Generalized_RCNN(nn.Module):
                 return_dict['losses']['ind_cls_loss'] = torch.tensor(0, dtype=torch.float32, device=seg_x.device)
                 return_dict['losses']['ind_iou_loss'] = torch.tensor(0, dtype=torch.float32, device=seg_x.device)
 
-                for i, (cls_score, iou_score, mist_layer) in enumerate(zip(ref_cls_score, ref_iou_score, self.mist_layer_list)):
+                for i, (cls_score, iou_score, CIM_layer) in enumerate(zip(ref_cls_score, ref_iou_score, self.CIM_layer_list)):
                     # follow WSDDN
                     lmda = 3 if i == 0 else 1
                     #########
 
                     if i == 0:
-                        pseudo_labels, pseudo_iou_label, loss_weights, group_assign = mist_layer(predict_cls,
+                        pseudo_labels, pseudo_iou_label, loss_weights, group_assign = CIM_layer(predict_cls,
                                                                                            predict_det,
                                                                                            rois, labels, iou_map,
                                                                                            asy_iou_map,
                                                                                            diffuse=self.diffuse_mode[i])
 
                     else:
-                        pseudo_labels, pseudo_iou_label, loss_weights, group_assign = mist_layer(ref_cls_score[i - 1],
+                        pseudo_labels, pseudo_iou_label, loss_weights, group_assign = CIM_layer(ref_cls_score[i - 1],
                                                                                            ref_iou_score[i - 1],
                                                                                            rois, labels, iou_map,
                                                                                            asy_iou_map,
