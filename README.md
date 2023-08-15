@@ -1,7 +1,11 @@
 # Complete Instances Mining for Weakly Supervised Instance Segmentation
 
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/complete-instances-mining-for-weakly/image-level-supervised-instance-segmentation)](https://paperswithcode.com/sota/image-level-supervised-instance-segmentation?p=complete-instances-mining-for-weakly)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/complete-instances-mining-for-weakly/image-level-supervised-instance-segmentation-2)](https://paperswithcode.com/sota/image-level-supervised-instance-segmentation-2?p=complete-instances-mining-for-weakly)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/complete-instances-mining-for-weakly/image-level-supervised-instance-segmentation-1)](https://paperswithcode.com/sota/image-level-supervised-instance-segmentation-1?p=complete-instances-mining-for-weakly)
+
 This project hosts the code for implementing the CIM algorithm for weakly supervised instance segmentation.
-![CIM](docs/pipeline.png) 
+![CIM](docs/pipeline.png)
 
 ## Installation
 ### Setup with Conda
@@ -106,3 +110,14 @@ Our implementation is based on these repositories:
 - (PRM) https://github.com/ZhouYanzhao/PRM
 - (PCL) https://github.com/ppengtang/pcl.pytorch
 - (mmdetection) https://github.com/open-mmlab/mmdetection
+
+## Citation
+If you use CIM or this repository in your work, please cite:
+```
+@inproceedings{zecheng2023CIM,
+  title={Complete Instances Mining for Weakly Supervised Instance Segmentation},
+  author={Li, Zecheng and Zeng, Zening and Liang, Yuqi and Yu, Jin-Gang},
+  booktitle={International Joint Conference on Artificial Intelligence},
+  year={2023},
+}
+```
