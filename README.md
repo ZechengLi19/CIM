@@ -37,7 +37,7 @@ bash ./scripts/visual_result_mmcv.sh
 ```
 
 ## Results
-Results of instance segmentation on the VOC2012 and COCO datasets can be downloaded [here](https://1drv.ms/f/s!Ah9g93YHHTrAaje14InpZd_XDEw?e=xhEhxT).
+Results of instance segmentation on the VOC2012 and COCO datasets can be downloaded from [here](https://1drv.ms/f/s!Ah9g93YHHTrAaje14InpZd_XDEw?e=xhEhxT).
 
 ## Contact
 If you have any questions, please feel free to contact Zecheng Li (lizecheng19@gmail.com). Thank you.
@@ -46,7 +46,7 @@ If you have any questions, please feel free to contact Zecheng Li (lizecheng19@g
 Our implementation is based on these repositories:
 - (PRM) https://github.com/ZhouYanzhao/PRM
 - (PCL) https://github.com/ppengtang/pcl.pytorch
-- (HRNet) https://github.com/HRNet/HRNet-Human-Pose-Estimation
+- (HRNet) https://github.com/HRNet/HRNet-Image-Classification
 - (mmdetection) https://github.com/open-mmlab/mmdetection
 
 ## Citation
