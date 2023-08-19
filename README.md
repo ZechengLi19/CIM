@@ -37,7 +37,7 @@ bash ./scripts/visual_result_mmcv.sh
 ```
 
 ## Results
-Results of instance segmentation on the VOC2012 and COCO datasets can be downloaded from [here](https://1drv.ms/f/s!Ah9g93YHHTrAaje14InpZd_XDEw?e=xhEhxT).
+Results of instance segmentation on the VOC2012 and COCO datasets can be downloaded from [OneDrive](https://1drv.ms/f/s!Ah9g93YHHTrAaje14InpZd_XDEw?e=xhEhxT) | [Google Drive](https://drive.google.com/drive/folders/11DrIJmIy7j7rIrUlvGNLJKFUnKbUjdWc?usp=sharing).
 
 ## Contact
 If you have any questions, please feel free to contact Zecheng Li (lizecheng19@gmail.com). Thank you.
