@@ -75,8 +75,8 @@ def loss_weight_bag_loss(predict, pseudo_labels, labels, loss_weight):
 
 # cal cls_loss, iou_loss
 # use image label
-def cls_iou_loss(cls_score, iou_score, pseudo_labels, pseudo_iou_label, loss_weights, labels, del_iou_branch=False):
-    pseudo_iou_label = pseudo_iou_label.flatten()
+def cls_iou_loss(cls_score, iou_score, pseudo_labels, pseudo_iou_labels, loss_weights, labels, del_iou_branch=False):
+    pseudo_iou_labels = pseudo_iou_labels.flatten()
     cls_score = cls_score.clamp(1e-6, 1 - 1e-6)
     iou_score = iou_score.clamp(1e-6, 1 - 1e-6)
 
@@ -104,7 +104,7 @@ def cls_iou_loss(cls_score, iou_score, pseudo_labels, pseudo_iou_label, loss_wei
     if ind.sum() != 0:
         pseudo_labels = (pseudo_labels[ind] != 0).float()
         assert pseudo_labels.max() == 1
-        pseudo_iou_label = pseudo_iou_label[ind]
+        pseudo_iou_labels = pseudo_iou_labels[ind]
         cls_score = cls_score[ind]
         iou_score = iou_score[ind]
         loss_weights = loss_weights[ind]
@@ -116,7 +116,7 @@ def cls_iou_loss(cls_score, iou_score, pseudo_labels, pseudo_iou_label, loss_wei
         fg_ind = (pseudo_labels[:,1:] != 0).sum(-1) != 0
         if fg_ind.sum() != 0:
             fg_pseudo_labels = pseudo_labels[fg_ind]
-            fg_pseudo_iou_label = pseudo_iou_label[fg_ind]
+            fg_pseudo_iou_label = pseudo_iou_labels[fg_ind]
             fg_iou_score = iou_score[fg_ind]
             fg_loss_weights = loss_weights[fg_ind]
 
@@ -478,7 +478,7 @@ class CIM_layer(nn.Module):
 
         pseudo_labels = gt_labels[max_overlap_idx]
         loss_weights = gt_weights[max_overlap_idx]
-        pseudo_iou_label = max_overlap_v
+        pseudo_iou_labels = max_overlap_v
 
         # filter out irrelevant proposals (without overlap with gt)
         ignore_inds = max_overlap_v == 0
@@ -497,7 +497,7 @@ class CIM_layer(nn.Module):
         except:
             pass
 
-        pseudo_iou_label[pseudo_iou_label > self.iou_thr] = 1
-        pseudo_iou_label[pseudo_iou_label <= self.iou_thr] = 0
+        pseudo_iou_labels[pseudo_iou_labels > self.iou_thr] = 1
+        pseudo_iou_labels[pseudo_iou_labels <= self.iou_thr] = 0
 
-        return pseudo_labels, pseudo_iou_label, loss_weights
+        return pseudo_labels, pseudo_iou_labels, loss_weights

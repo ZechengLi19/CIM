@@ -173,14 +173,14 @@ class Generalized_RCNN(nn.Module):
                     #########
 
                     if i == 0:
-                        pseudo_labels, pseudo_iou_label, loss_weights = CIM_layer(predict_cls,
+                        pseudo_labels, pseudo_iou_labels, loss_weights = CIM_layer(predict_cls,
                                                                                   predict_det,
                                                                                   rois, labels, iou_map,
                                                                                   asy_iou_map,
                                                                                   using_CIM=self.using_CIM[i])
 
                     else:
-                        pseudo_labels, pseudo_iou_label, loss_weights = CIM_layer(ref_cls_score[i - 1],
+                        pseudo_labels, pseudo_iou_labels, loss_weights = CIM_layer(ref_cls_score[i - 1],
                                                                                   ref_iou_score[i - 1],
                                                                                   rois, labels, iou_map,
                                                                                   asy_iou_map,
@@ -190,10 +190,10 @@ class Generalized_RCNN(nn.Module):
                         continue
 
                     pseudo_labels = pseudo_labels.detach()
-                    pseudo_iou_label = pseudo_iou_label.detach()
+                    pseudo_iou_labels = pseudo_iou_labels.detach()
                     loss_weights = lmda * loss_weights.detach()
 
-                    cls_loss, iou_loss, bag_loss = heads.cls_iou_loss(cls_score, iou_score, pseudo_labels, pseudo_iou_label, loss_weights, labels)
+                    cls_loss, iou_loss, bag_loss = heads.cls_iou_loss(cls_score, iou_score, pseudo_labels, pseudo_iou_labels, loss_weights, labels)
 
                     return_dict['losses']['cls_loss'] += cls_loss.clone()
                     return_dict['losses']['iou_loss'] += 3 * iou_loss.clone()
