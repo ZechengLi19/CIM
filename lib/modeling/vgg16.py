@@ -13,6 +13,7 @@ import utils.net as net_utils
 import pynvml
 pynvml.nvmlInit()
 
+# train PRM
 class FT_VGG(nn.Module):
     def __init__(self, model, num_classes):
         super(FT_VGG, self).__init__()
@@ -131,7 +132,7 @@ class dilated_conv5_body(nn.Module):
         return x
 
 
-class roi_2mlp_head_refine_model_mask_fuse(nn.Module):
+class MaskFuse(nn.Module):
     def __init__(self, dim_in, roi_xform_func, spatial_scale):
         super().__init__()
         self.dim_in = dim_in

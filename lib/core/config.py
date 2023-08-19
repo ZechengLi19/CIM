@@ -539,9 +539,9 @@ __C.MaskAlign = True
 __C.VGG_CLS_FEATURE = False
 __C.ResNet_CLS_FEATURE = False
 __C.HRNET_CLS_FEATURE = False
-__C.easy_case_mining = False
+__C.Anti_noise_sampling = False
 
-__C.topk = 0.1
+__C.p_seed = 0.1
 
 __C.step_rate = 0.
 __C.adj_thr = 0.85 # follow

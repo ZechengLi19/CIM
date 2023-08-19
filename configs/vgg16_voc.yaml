@@ -7,7 +7,7 @@ REFINE_TIMES: 3
 DEDUP_BOXES: 0.0
 transform_mode: ToTensor
 step_rate: 0.1
-easy_case_mining: True
+Anti_noise_sampling: True
 
 iou_dir: "./data/cob_iou/VOC2012"
 asy_iou_dir: "./data/cob_asy_iou/VOC2012"
@@ -23,11 +23,12 @@ SOLVER:
   MAX_ITER: 60000
   STEPS: [0, 40000]
 FAST_RCNN:
-  ROI_BOX_HEAD: vgg16.roi_2mlp_head_refine_model_mask_fuse
+  ROI_BOX_HEAD: vgg16.MaskFuse
   ROI_XFORM_METHOD: RoIAlign
   ROI_XFORM_RESOLUTION: 7
   MLP_HEAD_DIM: 4096
   MASK_SIZE: 7
+# multi scale train and test
 TRAIN:
   SCALES: (480, 576, 688, 864, 1200)
   MAX_SIZE: 2000
@@ -49,3 +50,26 @@ TEST:
     SCALE_H_FLIP: True
     SCORE_HEUR: 'AVG'
     COORD_HEUR: 'ID'
+
+# signal scale train and test
+#TRAIN:
+#  SCALES: (480, )
+#  MAX_SIZE: 2000
+#  IMS_PER_BATCH: 1
+#  BATCH_SIZE_PER_IM: 4096
+#  PROPOSAL_FILES: ('./data/cob/voc_2012_trainaug.pkl',)
+#  REFINE_FILES: ("./data/label_assign/voc_2012_label_assign.pkl",)
+#TEST:
+#  SCORE_THRESH: 1e-5
+#  PROPOSAL_FILTER: False
+#  SCALE: 480
+#  MAX_SIZE: 2000
+#  NMS: 0.3
+#  PROPOSAL_FILES: ('./data/cob/voc_2012_val.pkl',)
+#  BBOX_AUG:
+#    ENABLED: False
+#    H_FLIP: False
+#    SCALES: (480, )
+#    SCALE_H_FLIP: False
+#    SCORE_HEUR: 'AVG'
+#    COORD_HEUR: 'ID'

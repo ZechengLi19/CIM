@@ -585,7 +585,7 @@ class HighResolutionNet(nn.Module):
 
         return y
 
-class roi_2mlp_head_refine_model_mask_fuse(nn.Module):
+class MaskFuse(nn.Module):
     def __init__(self, dim_in, roi_xform_func, spatial_scale):
         super().__init__()
         self.dim_in = dim_in

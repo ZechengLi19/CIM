@@ -8,7 +8,7 @@ REFINE_TIMES: 3
 DEDUP_BOXES: 0.0
 transform_mode: ToTensor
 step_rate: 0.1
-easy_case_mining: True
+Anti_noise_sampling: True
 
 iou_dir: "./data/cob_iou/VOC2012"
 asy_iou_dir: "./data/cob_asy_iou/VOC2012"
@@ -25,13 +25,12 @@ SOLVER:
   MAX_ITER: 90000
   STEPS: [0, 60000]
 FAST_RCNN:
-  ROI_BOX_HEAD: resnet50.roi_2mlp_head_refine_model_mask_fuse
-  ROI_XFORM_METHOD: RoIAlign # RoIPoolF
+  ROI_BOX_HEAD: resnet50.MaskFuse
+  ROI_XFORM_METHOD: RoIAlign
   ROI_XFORM_RESOLUTION: 7
   MLP_HEAD_DIM: 4096
   MASK_SIZE: 7
 TRAIN:
-#  SCALES: (480, )
   SCALES: (480, 576, 688, 864, 1200)
   MAX_SIZE: 2000
   IMS_PER_BATCH: 1

@@ -83,43 +83,39 @@ class Generalized_RCNN(nn.Module):
 
         self.Box_Head = get_func(cfg.FAST_RCNN.ROI_BOX_HEAD)(self.Conv_Body.dim_out, self.roi_feature_transform, self.Conv_Body.spatial_scale)
 
-        step_rate = cfg.step_rate
-
         self.cls_iou_model = heads.cls_iou_model(self.Box_Head.dim_out, cls_num, cfg.REFINE_TIMES,
                                                      class_agnostic=False)
         self.CIM_layer_list = []
         for ref_time in range(cfg.REFINE_TIMES):
-            self.CIM_layer_list.append(heads.CIM_layer(portion=cfg.topk,
-                                                         full_thr=0.5 + step_rate * ref_time,
-                                                         iou_thr=0.25 + step_rate * ref_time,
-                                                         sample=cfg.easy_case_mining,
-                                                         ))
+            self.CIM_layer_list.append(heads.CIM_layer(p_seed=cfg.p_seed,
+                                                       cls_thr=0.25 + cfg.step_rate * ref_time,
+                                                       iou_thr=0.5 + cfg.step_rate * ref_time,
+                                                       Anti_noise_sampling=cfg.Anti_noise_sampling,
+                                                       ))
 
-        self.diffuse_mode = [True, True, True]
+        self.using_CIM = [True, True, True]
 
-        print("diffuse_mode: ")
-        print(self.diffuse_mode)
-
+        # load pre-trained weights
         self._init_modules()
 
     def _init_modules(self):
         if cfg.VGG_CLS_FEATURE:
             if cfg.MODEL.LOAD_IMAGENET_PRETRAINED_WEIGHTS:
                 vgg_utils.load_pretrained_imagenet_weights(self)
-        # resnet using pre-trained weight from torch
+        # Note: resnet using pre-trained weight from torch
+        #####
         # if not cfg.ResNet_CLS_FEATURE:
         #     if cfg.MODEL.LOAD_IMAGENET_PRETRAINED_WEIGHTS:
         #         resnet_utils.load_pretrained_imagenet_weights(self)
         if cfg.HRNET_CLS_FEATURE:
             if cfg.MODEL.LOAD_IMAGENET_PRETRAINED_WEIGHTS:
                 hrnet_utils.load_pretrained_imagenet_weights(self)
-        if cfg.TRAIN.FREEZE_CONV_BODY:  # false
+        if cfg.TRAIN.FREEZE_CONV_BODY:  # False
             for p in self.Conv_Body.parameters():
                 p.requires_grad = False
 
     def forward(self, data, rois, masks, labels, gtrois, mat, path=None, index=None):
         with torch.set_grad_enabled(self.training):
-            # print(index)
             im_data = data
             if self.training:
                 index = index.squeeze(dim=0).type(im_data.dtype)
@@ -145,8 +141,6 @@ class Generalized_RCNN(nn.Module):
             asy_iou_dir = cfg.asy_iou_dir
 
             predict_cls, predict_det, ref_cls_score, ref_iou_score = self.cls_iou_model(seg_x)
-            iou_map = None
-            asy_iou_map = None
 
             if self.training:
                 index = index.long()
@@ -155,21 +149,23 @@ class Generalized_RCNN(nn.Module):
                     iou_map = torch.tensor(iou_map, device=labels.device)[index][:, index]
                 except:
                     print("iou_map lose " + os.path.join(iou_dir, file_name + ".pkl"))
-                    raise AssertionError
+                    raise NotImplementedError("Please generate or download iou_map")
 
                 try:
                     asy_iou_map = pickle.load(open(os.path.join(asy_iou_dir, file_name + ".pkl"), "rb"))
                     asy_iou_map = torch.tensor(asy_iou_map, device=labels.device)[index][:, index]
                 except:
                     print("asy_iou_map lose " + os.path.join(asy_iou_dir, file_name + ".pkl"))
-                    raise AssertionError
+                    raise NotImplementedError("Please generate or download asy_iou_map")
 
                 return_dict['losses'] = {}
+                # Anti-noise branch loss
                 return_dict['losses']['bag_loss'] = torch.tensor(0, dtype=torch.float32, device=seg_x.device)
-                return_dict['losses']['cls_stage1_loss'] = torch.tensor(0, dtype=torch.float32, device=seg_x.device)
+                return_dict['losses']['pcl_loss'] = torch.tensor(0, dtype=torch.float32, device=seg_x.device)
 
-                return_dict['losses']['ind_cls_loss'] = torch.tensor(0, dtype=torch.float32, device=seg_x.device)
-                return_dict['losses']['ind_iou_loss'] = torch.tensor(0, dtype=torch.float32, device=seg_x.device)
+                # Refinement branch loss
+                return_dict['losses']['cls_loss'] = torch.tensor(0, dtype=torch.float32, device=seg_x.device)
+                return_dict['losses']['iou_loss'] = torch.tensor(0, dtype=torch.float32, device=seg_x.device)
 
                 for i, (cls_score, iou_score, CIM_layer) in enumerate(zip(ref_cls_score, ref_iou_score, self.CIM_layer_list)):
                     # follow WSDDN
@@ -177,18 +173,18 @@ class Generalized_RCNN(nn.Module):
                     #########
 
                     if i == 0:
-                        pseudo_labels, pseudo_iou_label, loss_weights, group_assign = CIM_layer(predict_cls,
-                                                                                           predict_det,
-                                                                                           rois, labels, iou_map,
-                                                                                           asy_iou_map,
-                                                                                           diffuse=self.diffuse_mode[i])
+                        pseudo_labels, pseudo_iou_label, loss_weights = CIM_layer(predict_cls,
+                                                                                  predict_det,
+                                                                                  rois, labels, iou_map,
+                                                                                  asy_iou_map,
+                                                                                  using_CIM=self.using_CIM[i])
 
                     else:
-                        pseudo_labels, pseudo_iou_label, loss_weights, group_assign = CIM_layer(ref_cls_score[i - 1],
-                                                                                           ref_iou_score[i - 1],
-                                                                                           rois, labels, iou_map,
-                                                                                           asy_iou_map,
-                                                                                           diffuse=self.diffuse_mode[i])
+                        pseudo_labels, pseudo_iou_label, loss_weights = CIM_layer(ref_cls_score[i - 1],
+                                                                                  ref_iou_score[i - 1],
+                                                                                  rois, labels, iou_map,
+                                                                                  asy_iou_map,
+                                                                                  using_CIM=self.using_CIM[i])
 
                     if pseudo_labels == None:
                         continue
@@ -197,15 +193,15 @@ class Generalized_RCNN(nn.Module):
                     pseudo_iou_label = pseudo_iou_label.detach()
                     loss_weights = lmda * loss_weights.detach()
 
-                    ind_cls_loss, ind_iou_loss, f_ind_cls_loss, f_ind_iou_loss, bag_loss = heads.cal_cls_iou_loss_function_full(cls_score, iou_score, pseudo_labels, pseudo_iou_label,loss_weights, labels)
+                    cls_loss, iou_loss, bag_loss = heads.cls_iou_loss(cls_score, iou_score, pseudo_labels, pseudo_iou_label, loss_weights, labels)
 
-                    return_dict['losses']['ind_cls_loss'] += ind_cls_loss.clone()
-                    return_dict['losses']['ind_iou_loss'] += 3 * ind_iou_loss.clone()
+                    return_dict['losses']['cls_loss'] += cls_loss.clone()
+                    return_dict['losses']['iou_loss'] += 3 * iou_loss.clone()
                     return_dict['losses']['bag_loss'] += bag_loss.clone()
 
                 return_dict['losses']['bag_loss'] += heads.mil_bag_loss(predict_cls, predict_det, labels)
-                cls_loss, _ = heads.graph_two_Loss_mean(predict_cls, mat, labels)
-                return_dict['losses']['cls_stage1_loss'] += cls_loss
+                pcl_loss = heads.PCL_loss(predict_cls, mat, labels)
+                return_dict['losses']['pcl_loss'] += pcl_loss
 
                 for k, v in return_dict['losses'].items():
                     return_dict['losses'][k] = v.unsqueeze(0)

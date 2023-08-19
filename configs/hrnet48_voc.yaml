@@ -58,7 +58,7 @@ REFINE_TIMES: 3
 DEDUP_BOXES: 0.0
 transform_mode: ToTensor
 step_rate: 0.1
-easy_case_mining: True
+Anti_noise_sampling: True
 
 iou_dir: "./data/cob_iou/VOC2012"
 asy_iou_dir: "./data/cob_asy_iou/VOC2012"
@@ -75,7 +75,7 @@ SOLVER:
   MAX_ITER: 90000
   STEPS: [0, 60000]
 FAST_RCNN:
-  ROI_BOX_HEAD: HRNet.roi_2mlp_head_refine_model_mask_fuse
+  ROI_BOX_HEAD: HRNet.MaskFuse
   ROI_XFORM_METHOD: RoIAlign
   ROI_XFORM_RESOLUTION: 7
   MLP_HEAD_DIM: 4096
