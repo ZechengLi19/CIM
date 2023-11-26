@@ -7,6 +7,10 @@
 This project hosts the code for implementing the CIM algorithm for weakly supervised instance segmentation.
 ![CIM](docs/pipeline.png)
 
+## Quick View
+- **Pipeline** [[code](./lib/modeling/model_builder.py)]
+- **CIM Strategy** [[code](./lib/modeling/heads.py)]
+
 ## Installation
 Please follow the instructions in [INSTALL.md](./docs/INSTALL.md).
 
@@ -46,6 +50,7 @@ If you have any questions, please feel free to contact Zecheng Li (lizecheng19@g
 Our implementation is based on these repositories:
 - (PRM) https://github.com/ZhouYanzhao/PRM
 - (PCL) https://github.com/ppengtang/pcl.pytorch
+- (MIST) https://github.com/NVlabs/wetectron
 - (HRNet) https://github.com/HRNet/HRNet-Image-Classification
 - (mmdetection) https://github.com/open-mmlab/mmdetection
 

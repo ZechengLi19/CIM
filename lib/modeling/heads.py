@@ -218,7 +218,7 @@ class cls_iou_model(nn.Module):
         #########
         return predict_cls, predict_det, refine_cls_score, refine_iou_score
 
-
+# CIM strategy
 class CIM_layer(nn.Module):
     def __init__(self, p_seed=0.1, cls_thr=0.25, iou_thr=0.5, con_thr=0.85, Anti_noise_sampling=True):
         super(CIM_layer, self).__init__()
