@@ -8,6 +8,8 @@ This project hosts the code for implementing the CIM algorithm for weakly superv
 ![CIM](docs/pipeline.png)
 
 ## Quick View
+Since running the code requires preparing a lot of data, if you just want to understand how we implement CIM, you can directly choose to read the paper and the following code.
+- **Paper** [[Paper](https://www.ijcai.org/proceedings/2023/0127.pdf)]
 - **Pipeline** [[code](./lib/modeling/model_builder.py)]
 - **CIM Strategy** [[code](./lib/modeling/heads.py)]
 
