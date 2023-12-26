@@ -427,7 +427,7 @@ class CIM_layer(nn.Module):
             gt_boxes, gt_labels, gt_weights, gt_idxs = self.MIST_label(preds, rois, labels, iou_map)
 
         if gt_idxs.sum() == 0:
-            return None, None, None, None
+            return None, None, None
 
         if iou_map == None:
             overlaps = box_iou(rois, gt_boxes)
