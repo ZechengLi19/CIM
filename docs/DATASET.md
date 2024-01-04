@@ -48,7 +48,7 @@ For simplicity, our datasets are structured in the following way:
 ```
 
 #### Note: 
-- **`VOC2012/annotations/`** is a folder containing label files in json format.
+- **`VOC2012/annotations/`** is a folder containing label files in json format. You can convert .xml format annotations to coco format, or you can use our pre-processed annotations [here](https://drive.google.com/drive/folders/1CrzR3V5dgrwzaQYER5AwnLD_OfpjUylh?usp=drive_link).
 - **`VOC2012/COB_SBD_trainaug/`**, **`VOC2012/COB_SBD_val/`** and **`coco2017/COB-COCO/`** are folders containing COB files. You can download **`VOC2012/COB_SBD_trainaug/`**, **`VOC2012/COB_SBD_val/`** from [here](https://drive.google.com/drive/folders/16Nvm3AMq3JFpOSIznUpZhVI0QrJazEmw?usp=sharing).
 - **`model_weight/`**  is a folder containing weight of models. Weights can be downloaded from [here](https://drive.google.com/drive/folders/1kzFsaPlbYK0OY31a7vqsRLDaJQ2BbAs0?usp=sharing). hrnetv2_w48_imagenet_pretrained.pth can be downloaded from [here](https://github.com/HRNet/HRNet-Image-Classification).
 - **`label_assign/`** contains pre-computed pseudo labels for VOC2012 and COCO2017 datasets, link is [here](https://drive.google.com/drive/folders/1j44PAimT7v4RkkOlKbbqcCLAiNf9sXjN?usp=sharing). It also can be created by running **`python tools/pre/AGPL_label_assign.py`**.

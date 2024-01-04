@@ -16,3 +16,14 @@ Finally, install other relevant dependencies.
 ```bash
 pip install -r requirements.txt
 ```
+
+### ⚠️Warning
+If you want to use other versions of python, you may encounter an error ```No module named 'utils.cython_bbox'```. This is because this repository is not compiled in other versions of python.
+The compilation steps are as follows.
+
+```
+cd ./lib
+python setup.py build_ext --inplace
+```
+
+Please refer to [issue2](https://github.com/ZechengLi19/CIM/issues/2) for more details.
