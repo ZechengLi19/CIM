@@ -20,7 +20,7 @@ Please follow the instructions in [INSTALL.md](./docs/INSTALL.md).
 Please follow the instructions in [DATASET.md](./docs/DATASET.md).
 
 ## Experiments
-Before starting the experiment. You need to update these four values ```cfg_file, output_file, dataset, iter_time``` according to your needs. 
+Before starting the experiment. You need to update these four values `cfg_file, output_file, dataset, iter_time` in `*.sh` files. 
 ### Training
 ```bash
 bash ./scripts/train_CIM.sh
@@ -40,6 +40,7 @@ Then, we use mmdetection for Mask R-CNN Refinement.
 
 ### Visualization
 ```bash
+# install mmcv-full==1.*, instead of 2.* to avoid conflict
 bash ./scripts/visual_result_mmcv.sh
 ```
 
