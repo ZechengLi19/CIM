@@ -19,6 +19,7 @@ from pre_tools import *
 
 trash="./data/trash"
 useless_file = "assignment_label_rm_{}.pkl"
+os.makedirs(trash, exist_ok=True)
 
 def assign_coco2017(imgIds, worker_id, model, device, dataset, cocoGt):
     img_dir = "./data/coco2017/train2017"
@@ -105,7 +106,7 @@ def assign_coco2017(imgIds, worker_id, model, device, dataset, cocoGt):
 
 def assign_voc2012(imgIds, worker_id, model, device, dataset, cocoGt):
     img_dir = "./data/VOC2012/JPEGImages"
-    cob_original_file = "./dataset/VOC2012/COB_SBD_trainaug"
+    cob_original_file = "./data/VOC2012/COB_SBD_trainaug"
     model = model.inference().to(device)
     sbd_proposals = dict(indexes=[], mat=[], score=[])
     for index in tqdm(range(len(imgIds))):

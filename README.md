@@ -3,6 +3,8 @@
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/complete-instances-mining-for-weakly/image-level-supervised-instance-segmentation)](https://paperswithcode.com/sota/image-level-supervised-instance-segmentation?p=complete-instances-mining-for-weakly)
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/complete-instances-mining-for-weakly/image-level-supervised-instance-segmentation-2)](https://paperswithcode.com/sota/image-level-supervised-instance-segmentation-2?p=complete-instances-mining-for-weakly)
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/complete-instances-mining-for-weakly/image-level-supervised-instance-segmentation-1)](https://paperswithcode.com/sota/image-level-supervised-instance-segmentation-1?p=complete-instances-mining-for-weakly)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/complete-instances-mining-for-weakly/weakly-supervised-instance-segmentation-on)](https://paperswithcode.com/sota/weakly-supervised-instance-segmentation-on?p=complete-instances-mining-for-weakly)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/complete-instances-mining-for-weakly/point-supervised-instance-segmentation-on)](https://paperswithcode.com/sota/point-supervised-instance-segmentation-on?p=complete-instances-mining-for-weakly)
 
 This project hosts the code for implementing the CIM algorithm for weakly supervised instance segmentation.
 ![CIM](docs/pipeline.png)
@@ -45,13 +47,17 @@ bash ./scripts/visual_result_mmcv.sh
 ```
 
 ## Results
+`CIM` uses image-level labels to generate pseudo labels. `CIM-p` uses point-level labels to generate pseudo labels. `CIM+` means `CIM` with Mask R-CNN refinement. `CIM-p+` means `CIM-p` with Mask R-CNN refinement.
+
 ### VOC2012
-| Method |     Backbone      | mAP25 | mAP50 | mAP70 |  mAP75   |
-|:------:|:-----------------:|:-----:|:-----:|:-----:|:--------:|
-|  CIM   |     ResNet-50     | 64.9 | 51.1  | 32.4  |  26.1    |
-|  CIM   |      VGG-16       | 65.6 | 50.8  | 31.0  |     25.2     |
-|  CIM   |    HRNet-W48      | 68.3 | 52.6  | 33.7  |     28.4     |
-|  CIM+  |   ResNet-50    | 68.7 | 55.9  | 37.1  |      30.9    |
+| Method |     Backbone      | mAP25 | mAP50 | mAP70 | mAP75 |
+|:------:|:-----------------:|:-----:|:-----:|:-----:|:-----:|
+|  CIM   |     ResNet-50     | 64.9  | 51.1  | 32.4  | 26.1  |
+| CIM-p  |     ResNet-50     | 65.2  | 51.6  | 33.3  | 27.2  |
+|  CIM   |      VGG-16       | 65.6  | 50.8  | 31.0  | 25.2  |
+|  CIM   |    HRNet-W48      | 68.3  | 52.6  | 33.7  | 28.4  |
+|  CIM+  |   ResNet-50    | 68.7  | 55.9  | 37.1  | 30.9  |
+| CIM-p+ |   ResNet-50    | 67.8  | 55.5  | 36.6  | 31.1  |
 
 ### COCO val2017
 | Method |     Backbone      |  AP  | mAP50 | mAP75 |
@@ -60,10 +66,10 @@ bash ./scripts/visual_result_mmcv.sh
 |  CIM+  |   ResNet-50    | 17.0 |   29.4    | 17.0  | 
 
 ### COCO test-dev
-| Method |     Backbone      |  AP  | mAP50 | mAP75 |
-|:------:|:-----------------:|:----:|:-----:|:-----:|
-|  CIM   |     ResNet-50     | 12.0 | 23.0  |   11.3    | 
-|  CIM+  |   ResNet-50    | 17.2 |   29.7     | 17.3  | 
+| Method |    Backbone     |  AP  |  mAP50  |  mAP75   |
+|:------:|:---------------:|:----:|:-------:|:--------:|
+|  CIM   |    ResNet-50    | 12.0 |  23.0   |  11.3    | 
+|  CIM+  |    ResNet-50    | 17.2 |  29.7   |   17.3   | 
 ### Download
 Results of instance segmentation on the VOC2012 and COCO datasets can be downloaded from [OneDrive](https://1drv.ms/f/s!Ah9g93YHHTrAaje14InpZd_XDEw?e=xhEhxT) | [Google Drive](https://drive.google.com/drive/folders/11DrIJmIy7j7rIrUlvGNLJKFUnKbUjdWc?usp=sharing).
 
