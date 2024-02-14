@@ -1,10 +1,10 @@
 # Complete Instances Mining for Weakly Supervised Instance Segmentation
 
-[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/complete-instances-mining-for-weakly/image-level-supervised-instance-segmentation)](https://paperswithcode.com/sota/image-level-supervised-instance-segmentation?p=complete-instances-mining-for-weakly)
-[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/complete-instances-mining-for-weakly/image-level-supervised-instance-segmentation-2)](https://paperswithcode.com/sota/image-level-supervised-instance-segmentation-2?p=complete-instances-mining-for-weakly)
-[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/complete-instances-mining-for-weakly/image-level-supervised-instance-segmentation-1)](https://paperswithcode.com/sota/image-level-supervised-instance-segmentation-1?p=complete-instances-mining-for-weakly)
-[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/complete-instances-mining-for-weakly/weakly-supervised-instance-segmentation-on)](https://paperswithcode.com/sota/weakly-supervised-instance-segmentation-on?p=complete-instances-mining-for-weakly)
-[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/complete-instances-mining-for-weakly/point-supervised-instance-segmentation-on)](https://paperswithcode.com/sota/point-supervised-instance-segmentation-on?p=complete-instances-mining-for-weakly)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/complete-instances-mining-for-weakly-1/image-level-supervised-instance-segmentation-2)](https://paperswithcode.com/sota/image-level-supervised-instance-segmentation-2?p=complete-instances-mining-for-weakly-1)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/complete-instances-mining-for-weakly-1/image-level-supervised-instance-segmentation-1)](https://paperswithcode.com/sota/image-level-supervised-instance-segmentation-1?p=complete-instances-mining-for-weakly-1)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/complete-instances-mining-for-weakly-1/image-level-supervised-instance-segmentation)](https://paperswithcode.com/sota/image-level-supervised-instance-segmentation?p=complete-instances-mining-for-weakly-1)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/complete-instances-mining-for-weakly-1/weakly-supervised-instance-segmentation-on)](https://paperswithcode.com/sota/weakly-supervised-instance-segmentation-on?p=complete-instances-mining-for-weakly-1)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/complete-instances-mining-for-weakly-1/point-supervised-instance-segmentation-on)](https://paperswithcode.com/sota/point-supervised-instance-segmentation-on?p=complete-instances-mining-for-weakly-1)
 
 This project hosts the code for implementing the CIM algorithm for weakly supervised instance segmentation.
 ![CIM](docs/pipeline.png)
